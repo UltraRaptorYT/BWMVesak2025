@@ -1,0 +1,9 @@
+.spaceBG {
+  background: url("/1.jpg");
+  background-size: cover;
+}
+
+.fullHeight {
+  min-height: 100dvh;
+  min-height: 100vh;
+}
