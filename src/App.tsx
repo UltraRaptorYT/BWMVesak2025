@@ -6,6 +6,7 @@ import { drawKeypoints, drawSkeleton } from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
+import { Affliction } from "./components/Affliction";
 
 const PersonExtractor: React.FC = () => {
   const debug: boolean = import.meta.env.DEV;
@@ -190,7 +191,11 @@ const PersonExtractor: React.FC = () => {
       <video ref={videoRef} className="hidden" />
       <div className="absolute h-full top-0 left-1/2 -translate-x-1/2 z-10">
         <canvas ref={canvasRef} className="h-full border-2 border-black" />
-        <button className="absolute top-1/3 left-1/2 bg-pink-500">Ignorance</button>
+        <Affliction />
+        <Affliction />
+        <Affliction />
+        <Affliction />
+        <Affliction />
       </div>
 
       <img
