@@ -1,6 +1,9 @@
 import React, { useRef, useEffect } from "react";
 import * as bodyPix from "@tensorflow-models/body-pix";
 import "@tensorflow/tfjs";
+import { drawKeypoints, drawSkeleton } from "@/lib/pose_utils";
+import * as poseDetection from "@tensorflow-models/pose-detection";
+import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
 
 const PersonExtractor: React.FC = () => {
@@ -9,6 +12,15 @@ const PersonExtractor: React.FC = () => {
 
   useEffect(() => {
     const loadModelAndStart = async () => {
+      const detectorConfig = {
+        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+      };
+
+      let detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        detectorConfig
+      );
+
       const net = await bodyPix.load();
 
       const video = videoRef.current;
@@ -40,6 +52,7 @@ const PersonExtractor: React.FC = () => {
         const loop = async () => {
           // Step 1: Get segmentation
           const segmentation = await net.segmentPerson(video);
+          const poses = await detector.estimatePoses(video);
 
           // Step 2: Get image data from video
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -73,22 +86,32 @@ const PersonExtractor: React.FC = () => {
           // Step 5: Put updated person image over background
           ctx.putImageData(frame, 0, 0);
 
+          if (poses.length > 0) {
+            const keypoints = poses[0].keypoints;
+            drawKeypoints(keypoints, 0.5, ctx, 1, "lime");
+            drawSkeleton(keypoints, 0.5, ctx, 1, "aqua");
+          }
+
           requestAnimationFrame(loop);
         };
 
         loop();
       };
     };
-
-    loadModelAndStart();
+    async function loadTF() {
+      await tf.ready();
+      await tf.setBackend("webgl");
+      await loadModelAndStart();
+    }
+    loadTF();
   }, []);
 
   return (
-    <div className="relative w-full fullHeight">
+    <div className="relative w-full fullHeight flex items-center justify-center">
       <video ref={videoRef} className="hidden" />
       <canvas
         ref={canvasRef}
-        className="absolute top-0 left-0 z-10 bg-transparent"
+        className="absolute top-0 left-1/2 -translate-x-1/2 z-10 bg-transparent object-contain fullHeight"
       />
       <img
         src="./1.jpg"
