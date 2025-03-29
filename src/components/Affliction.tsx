@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Affliction() {
   const [randomX, setRandomX] = useState(Math.floor(Math.random() * 91));
   const [randomY, setRandomY] = useState(Math.floor(Math.random() * 91));
   const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    setRandomX(Math.floor(Math.random() * 91));
+    setRandomY(Math.floor(Math.random() * 91));
+    setScale(1);
+  }, []);
 
   return (
     <button
