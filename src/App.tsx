@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import * as bodyPix from "@tensorflow-models/body-pix";
+import { drawHand } from "@/lib/hand_utils";
 import "@tensorflow/tfjs";
 import { drawKeypoints, drawSkeleton } from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
@@ -23,6 +24,19 @@ const PersonExtractor: React.FC = () => {
 
       const net = await bodyPix.load();
 
+      const { Hands } = window as any;
+
+      const hands = new Hands({
+        locateFile: (file: string) =>
+          `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+      });
+
+      hands.setOptions({
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
       const video = videoRef.current;
       if (!video) return;
 
@@ -33,6 +47,19 @@ const PersonExtractor: React.FC = () => {
         video.play();
         runSegmentation();
       };
+
+      hands.onResults((results: any) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        if (results.multiHandLandmarks) {
+          for (const landmarks of results.multiHandLandmarks) {
+            drawHand(ctx, landmarks, "red");
+          }
+        }
+      });
 
       const runSegmentation = async () => {
         const canvas = canvasRef.current;
@@ -91,6 +118,8 @@ const PersonExtractor: React.FC = () => {
             drawKeypoints(keypoints, 0.5, ctx, 1, "lime");
             drawSkeleton(keypoints, 0.5, ctx, 1, "aqua");
           }
+
+          await hands.send({ image: video });
 
           requestAnimationFrame(loop);
         };
