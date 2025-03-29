@@ -9,7 +9,7 @@ import "./App.css";
 import { Affliction } from "./components/Affliction";
 
 const PersonExtractor: React.FC = () => {
-  const debug: boolean = import.meta.env.DEV;
+  const debug: boolean = true;
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
