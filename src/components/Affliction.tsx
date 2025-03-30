@@ -21,7 +21,7 @@ export function Affliction() {
         height: "100px",
         transform: `scale(${scale})`,
       }}
-      className="bg-pink-500"
+      className="bg-pink-500 afflictions"
     >
       Ignorance
     </button>

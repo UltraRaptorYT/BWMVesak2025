@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState, ReactNode } from "react";
 import * as bodyPix from "@tensorflow-models/body-pix";
 import { drawHand } from "@/lib/hand_utils";
 import "@tensorflow/tfjs";
@@ -6,12 +6,17 @@ import { drawKeypoints, drawSkeleton } from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
-import { Affliction } from "./components/Affliction";
+import { Affliction } from "@/components/Affliction";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const PersonExtractor: React.FC = () => {
   const debug: boolean = true;
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameStartBtnRef = useRef<HTMLButtonElement>(null);
+
+  const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
   useEffect(() => {
     const loadModelAndStart = async () => {
@@ -55,34 +60,57 @@ const PersonExtractor: React.FC = () => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        const buttons = document.querySelectorAll("button");
         if (results.multiHandLandmarks) {
           for (const landmarks of results.multiHandLandmarks) {
-            drawHand(ctx, landmarks, "red"); // Check each hand landmark
+            drawHand(ctx, landmarks, "rgba(255,0,0,0.3)"); // Check each hand landmark
             for (const point of landmarks) {
               const x = point.x * canvas.width;
               const y = point.y * canvas.height;
+              const canvasRect = canvas.getBoundingClientRect();
+              const xScreen = point.x * canvasRect.width + canvasRect.left;
+              const yScreen = point.y * canvasRect.height + canvasRect.top;
 
-              buttons.forEach((btn) => {
-                const buttonRect = btn.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
+              // gameStartBtn
+              const gameStartBtn = gameStartBtnRef.current;
+              if (gameStartBtn) {
+                const gameStartBtnRect = gameStartBtn.getBoundingClientRect();
+                if (
+                  gameStartBtnRect.left < xScreen &&
+                  xScreen < gameStartBtnRect.right &&
+                  gameStartBtnRect.top < yScreen &&
+                  yScreen < gameStartBtnRect.bottom &&
+                  !gameStart
+                ) {
+                  console.log("Touched Game Start");
+                  gameStartFunc();
+                }
+              }
+
+              // Afflictions
+              const afflictions = document.querySelectorAll(".afflictions");
+              afflictions.forEach((affliction) => {
+                const afflictionRect = affliction.getBoundingClientRect();
 
                 const circleCenterX =
-                  (buttonRect.left - canvasRect.left + buttonRect.width / 2) *
+                  (afflictionRect.left -
+                    canvasRect.left +
+                    afflictionRect.width / 2) *
                   (canvas.width / canvasRect.width);
                 const circleCenterY =
-                  (buttonRect.top - canvasRect.top + buttonRect.height / 2) *
+                  (afflictionRect.top -
+                    canvasRect.top +
+                    afflictionRect.height / 2) *
                   (canvas.height / canvasRect.height);
                 const circleRadius =
-                  (buttonRect.width / 2) * (canvas.width / canvasRect.width);
+                  (afflictionRect.width / 2) *
+                  (canvas.width / canvasRect.width);
 
                 const distance = Math.sqrt(
                   (x - circleCenterX) ** 2 + (y - circleCenterY) ** 2
                 );
 
                 if (distance <= circleRadius) {
-                  btn.style.opacity = "0";
-                  btn.disabled = true;
+                  whackAfflictions(affliction);
                 }
               });
             }
@@ -161,8 +189,8 @@ const PersonExtractor: React.FC = () => {
               ...kp,
               x: canvas.width - kp.x,
             }));
-            drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, "lime");
-            drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, "aqua");
+            drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, "transparent");
+            drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, "transparent");
           }
 
           ctx.restore(); // Done with flipped drawing
@@ -186,23 +214,54 @@ const PersonExtractor: React.FC = () => {
     loadTF();
   }, []);
 
+  const [gameStart, setGameStart] = useState<boolean>(false);
+
+  function whackAfflictions(affliction: Element) {
+    affliction.remove();
+    setAfflictionArr((prev) => [...prev, <Affliction></Affliction>]);
+  }
+
+  function gameStartFunc() {
+    if (gameStart) return; // prevent multiple triggers
+    setGameStart(true);
+
+    const afflictions = Array.from({ length: 5 }, (_, i) => (
+      <Affliction key={i} />
+    ));
+    setAfflictionArr((prev) => [...prev, ...afflictions]);
+  }
+
+  useEffect(() => {}, [gameStart]);
+
   return (
-    <div className="relative w-full h-screen flex items-center justify-center">
+    <div className="relative w-full h-screen flex items-center justify-center mainBG">
       <video ref={videoRef} className="hidden" />
       <div className="absolute h-full top-0 left-1/2 -translate-x-1/2 z-10">
-        <canvas ref={canvasRef} className="h-full border-2 border-black" />
-        <Affliction />
-        <Affliction />
-        <Affliction />
-        <Affliction />
-        <Affliction />
+        <canvas
+          ref={canvasRef}
+          className={cn("h-full", gameStart ? "border-2 border-black" : "")}
+        />
+        {!gameStart ? (
+          <div className="absolute h-full w-full top-0">
+            {/* <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl">P</p> */}
+            <Button
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
+              size="lg"
+              id="gameStartBtn"
+              ref={gameStartBtnRef}
+              onClick={() => gameStartFunc()}
+            >
+              Game Start
+            </Button>
+          </div>
+        ) : (
+          <div className="absolute h-full w-full top-0" id="afflictionDiv">
+            {afflictionArr.map((e, i) => (
+              <div key={i}>{e}</div>
+            ))}
+          </div>
+        )}
       </div>
-
-      <img
-        src="./1.jpg"
-        className="absolute top-0 left-0 w-full h-full object-cover z-0"
-        alt="Forest background"
-      />
     </div>
   );
 };
