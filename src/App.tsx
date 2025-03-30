@@ -2,13 +2,13 @@ import React, { useRef, useEffect, useState, ReactNode } from "react";
 import * as bodyPix from "@tensorflow-models/body-pix";
 import { drawHand } from "@/lib/hand_utils";
 import "@tensorflow/tfjs";
-import { drawKeypoints, drawSkeleton } from "@/lib/pose_utils";
+import { drawKeypoints, drawSkeleton, isPraying } from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
 import { Affliction } from "@/components/Affliction";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 
 const PersonExtractor: React.FC = () => {
   const debug: boolean = true;
@@ -192,6 +192,9 @@ const PersonExtractor: React.FC = () => {
             drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, "transparent");
             drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, "transparent");
           }
+          if (isPraying(poses[0]) && !gameStart) {
+            gameStartFunc();
+          }
 
           ctx.restore(); // Done with flipped drawing
 
@@ -243,8 +246,8 @@ const PersonExtractor: React.FC = () => {
         />
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
-            {/* <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl">P</p> */}
-            <Button
+            <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">Put your palms together</p>
+            {/* <Button
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
               size="lg"
               id="gameStartBtn"
@@ -252,7 +255,7 @@ const PersonExtractor: React.FC = () => {
               onClick={() => gameStartFunc()}
             >
               Game Start
-            </Button>
+            </Button> */}
           </div>
         ) : (
           <div className="absolute h-full w-full top-0" id="afflictionDiv">
