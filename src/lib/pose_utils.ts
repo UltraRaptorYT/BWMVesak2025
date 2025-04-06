@@ -106,16 +106,16 @@ export type Keypoint = {
 
 function getKeypoint(pose: poseDetection.Pose, name: string): Keypoint | null {
   const point = pose.keypoints.find((k) => k.name === name);
-  return point && point.score && point.score > 0.5 ? point : null;
+  return point && point.score && point.score > 0.35 ? point : null;
 }
 
 export function isPraying(pose: poseDetection.Pose): boolean {
   const leftWrist = getKeypoint(pose, "left_wrist");
   const rightWrist = getKeypoint(pose, "right_wrist");
-  const leftElbow = getKeypoint(pose, "left_elbow");
-  const rightElbow = getKeypoint(pose, "right_elbow");
+  // const leftElbow = getKeypoint(pose, "left_elbow");
+  // const rightElbow = getKeypoint(pose, "right_elbow");
 
-  if (!leftWrist || !rightWrist || !leftElbow || !rightElbow) return false;
+  if (!leftWrist || !rightWrist) return false;
 
   const wristDistance = Math.hypot(
     leftWrist.x - rightWrist.x,

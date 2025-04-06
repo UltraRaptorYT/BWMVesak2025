@@ -15,6 +15,8 @@ const PersonExtractor: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
+  const poseColor = "transparent";
+  const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
 
   const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
@@ -82,7 +84,7 @@ const PersonExtractor: React.FC = () => {
                   !gameStart
                 ) {
                   console.log("Touched Game Start");
-                  gameStartFunc();
+                  setGameStart(true);
                 }
               }
 
@@ -189,11 +191,11 @@ const PersonExtractor: React.FC = () => {
               ...kp,
               x: canvas.width - kp.x,
             }));
-            drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, "transparent");
-            drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, "transparent");
+            drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, poseColor);
+            drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, poseColor);
           }
           if (isPraying(poses[0]) && !gameStart) {
-            gameStartFunc();
+            setGameStart(true);
           }
 
           ctx.restore(); // Done with flipped drawing
@@ -225,8 +227,16 @@ const PersonExtractor: React.FC = () => {
   }
 
   function gameStartFunc() {
-    if (gameStart) return; // prevent multiple triggers
-    setGameStart(true);
+    // activate once
+    if (afflictionArr.length > 0) {
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const dataUrl = canvas.toDataURL("image/png");
+      setBgImageDataUrl(dataUrl);
+    }
 
     const afflictions = Array.from({ length: 5 }, (_, i) => (
       <Affliction key={i} />
@@ -234,7 +244,11 @@ const PersonExtractor: React.FC = () => {
     setAfflictionArr((prev) => [...prev, ...afflictions]);
   }
 
-  useEffect(() => {}, [gameStart]);
+  useEffect(() => {
+    if (gameStart) {
+      gameStartFunc();
+    }
+  }, [gameStart]);
 
   return (
     <div className="relative w-full h-screen flex items-center justify-center mainBG">
@@ -246,7 +260,9 @@ const PersonExtractor: React.FC = () => {
         />
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
-            <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">Put your palms together</p>
+            <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
+              Put your palms together
+            </p>
             {/* <Button
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
               size="lg"
@@ -265,6 +281,13 @@ const PersonExtractor: React.FC = () => {
           </div>
         )}
       </div>
+      {bgImageDataUrl && gameStart && (
+        <img
+          src={bgImageDataUrl}
+          className="absolute h-full top-0 left-1/2 -translate-x-1/2 z-0 object-cover"
+          alt="Background"
+        />
+      )}
     </div>
   );
 };
