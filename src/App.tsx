@@ -8,6 +8,14 @@ import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
 import { Affliction } from "@/components/Affliction";
 import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 // import { Button } from "@/components/ui/button";
 
 const PersonExtractor: React.FC = () => {
@@ -20,6 +28,8 @@ const PersonExtractor: React.FC = () => {
   const [lightPositions, setLightPositions] = useState<
     { x: number; y: number }[]
   >([]);
+  const [lightSize, setLightSize] = useState<number>(128);
+  const [showAdmin, setShowAdmin] = useState<boolean>(false);
 
   const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
@@ -194,7 +204,6 @@ const PersonExtractor: React.FC = () => {
           // 5. Get flipped video frame
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-          
           const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const { data } = frame;
 
@@ -274,16 +283,48 @@ const PersonExtractor: React.FC = () => {
     }
   }, [gameStart]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "`") {
+        console.log("pressed");
+        setShowAdmin((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="relative w-full h-screen flex items-center justify-center mainBG">
       <video ref={videoRef} className="hidden" />
-      <div className="absolute h-full top-0 left-1/2 -translate-x-1/2 z-10">
+      {bgImageDataUrl && gameStart && (
+        <img
+          src={bgImageDataUrl}
+          className="absolute h-full top-0 left-1/2 -translate-x-1/2 object-cover"
+          alt="Background"
+        />
+      )}
+      {showAdmin && (
+        <Card className="absolute z-10 w-md">
+          <CardHeader>
+            <CardTitle>Config</CardTitle>
+            <CardDescription>Card Description</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Card Content</p>
+          </CardContent>
+        </Card>
+      )}
+      <div className="absolute h-full top-0 left-1/2 -translate-x-1/2">
         <canvas
           ref={canvasRef}
           className={cn(
             "h-full transition-opacity duration-500",
             gameStart ? "border-2 border-black" : "",
-            bgImageDataUrl ? "opacity-[0.8]" : "opacity-100"
+            bgImageDataUrl ? "opacity-[0.85]" : "opacity-100"
           )}
         />
 
@@ -310,27 +351,20 @@ const PersonExtractor: React.FC = () => {
           </div>
         )}
       </div>
-      {bgImageDataUrl && gameStart && (
-        <img
-          src={bgImageDataUrl}
-          className="absolute h-full top-0 left-1/2 -translate-x-1/2 z-0 object-cover"
-          alt="Background"
-        />
-      )}
+
       {bgImageDataUrl &&
         gameStart &&
         lightPositions.map((pos, i) => {
-          let size = 128;
           return (
             <div
               key={i}
-              className={`rounded-full bg-yellow-300 blur-xl z-30 pointer-events-none transition-transform duration-100`}
+              className={`rounded-full bg-yellow-300 blur-xl pointer-events-none transition-transform duration-100`}
               style={{
                 position: "fixed",
-                left: pos.x - size / 2,
-                top: pos.y - size / 2,
-                width: `${size}px`,
-                height: `${size}px`,
+                left: pos.x - lightSize / 2,
+                top: pos.y - lightSize / 2,
+                width: `${lightSize}px`,
+                height: `${lightSize}px`,
               }}
             />
           );
