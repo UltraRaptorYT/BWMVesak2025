@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 // import { Button } from "@/components/ui/button";
 
 const PersonExtractor: React.FC = () => {
@@ -285,7 +285,7 @@ const PersonExtractor: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "`") {
+      if (e.ctrlKey && e.code === "Backquote") {
         console.log("pressed");
         setShowAdmin((prev) => !prev);
       }
@@ -296,6 +296,11 @@ const PersonExtractor: React.FC = () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  function handleLightSizeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setLightSize(parseInt(e.target.value))
+  }
+  
 
   return (
     <div className="relative w-full h-screen flex items-center justify-center mainBG">
@@ -310,11 +315,13 @@ const PersonExtractor: React.FC = () => {
       {showAdmin && (
         <Card className="absolute z-10 w-md">
           <CardHeader>
-            <CardTitle>Config</CardTitle>
-            <CardDescription>Card Description</CardDescription>
+            <CardTitle>Admin Config</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Card Content</p>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="lightSize">Light Size</Label>
+              <Input onChange={handleLightSizeChange} type="text" id="lightSize" placeholder="Light Size" value={lightSize} pattern="\d+" required/>
+            </div>
           </CardContent>
         </Card>
       )}

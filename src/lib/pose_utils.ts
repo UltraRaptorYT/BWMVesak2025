@@ -105,8 +105,8 @@ export type Keypoint = {
 };
 
 function getKeypoint(pose: poseDetection.Pose, name: string): Keypoint | null {
-  const point = pose.keypoints.find((k) => k.name === name);
-  return point && point.score && point.score > 0.35 ? point : null;
+  const point = pose?.keypoints?.find((k) => k.name === name);
+  return point?.score != null && point.score > 0.35 ? point : null;
 }
 
 export function isPraying(pose: poseDetection.Pose): boolean {
