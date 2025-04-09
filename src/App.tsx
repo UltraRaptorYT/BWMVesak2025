@@ -17,6 +17,9 @@ const PersonExtractor: React.FC = () => {
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
   const poseColor = "transparent";
   const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
+  const [lightPositions, setLightPositions] = useState<
+    { x: number; y: number }[]
+  >([]);
 
   const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
@@ -41,8 +44,9 @@ const PersonExtractor: React.FC = () => {
 
       hands.setOptions({
         modelComplexity: 1,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
+        minDetectionConfidence: 0.35,
+        minTrackingConfidence: 0.35,
+        num_hands: 100,
       });
 
       const video = videoRef.current;
@@ -62,13 +66,17 @@ const PersonExtractor: React.FC = () => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        if (results.multiHandLandmarks) {
+        if (
+          results.multiHandLandmarks &&
+          results.multiHandLandmarks.length > 0
+        ) {
+          console.log(results.multiHandLandmarks);
           for (const landmarks of results.multiHandLandmarks) {
-            drawHand(ctx, landmarks, "rgba(255,0,0,0.3)"); // Check each hand landmark
+            const canvasRect = canvas.getBoundingClientRect();
+            drawHand(ctx, landmarks, poseColor); // Check each hand landmark
             for (const point of landmarks) {
               const x = point.x * canvas.width;
               const y = point.y * canvas.height;
-              const canvasRect = canvas.getBoundingClientRect();
               const xScreen = point.x * canvasRect.width + canvasRect.left;
               const yScreen = point.y * canvasRect.height + canvasRect.top;
 
@@ -116,7 +124,19 @@ const PersonExtractor: React.FC = () => {
                 }
               });
             }
+            const newPositions = results.multiHandLandmarks.map(
+              (landmarks: any) => {
+                const tip = landmarks[9];
+                return {
+                  x: tip.x * canvasRect.width + canvasRect.left,
+                  y: tip.y * canvasRect.height + canvasRect.top,
+                };
+              }
+            );
+            setLightPositions(newPositions);
           }
+        } else {
+          setLightPositions([]);
         }
       });
 
@@ -162,7 +182,9 @@ const PersonExtractor: React.FC = () => {
           const poses = await detector.estimatePoses(offscreenCanvas);
 
           // 3. Flip main canvas context
-          ctx.save();
+          ctx.save(); // ⬅️ Save original state
+          ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear before drawing
+
           ctx.scale(-1, 1);
           ctx.translate(-canvas.width, 0);
 
@@ -171,6 +193,8 @@ const PersonExtractor: React.FC = () => {
 
           // 5. Get flipped video frame
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          
           const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const { data } = frame;
 
@@ -256,8 +280,13 @@ const PersonExtractor: React.FC = () => {
       <div className="absolute h-full top-0 left-1/2 -translate-x-1/2 z-10">
         <canvas
           ref={canvasRef}
-          className={cn("h-full", gameStart ? "border-2 border-black" : "")}
+          className={cn(
+            "h-full transition-opacity duration-500",
+            gameStart ? "border-2 border-black" : "",
+            bgImageDataUrl ? "opacity-[0.8]" : "opacity-100"
+          )}
         />
+
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
             <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
@@ -288,6 +317,24 @@ const PersonExtractor: React.FC = () => {
           alt="Background"
         />
       )}
+      {bgImageDataUrl &&
+        gameStart &&
+        lightPositions.map((pos, i) => {
+          let size = 128;
+          return (
+            <div
+              key={i}
+              className={`rounded-full bg-yellow-300 blur-xl z-30 pointer-events-none transition-transform duration-100`}
+              style={{
+                position: "fixed",
+                left: pos.x - size / 2,
+                top: pos.y - size / 2,
+                width: `${size}px`,
+                height: `${size}px`,
+              }}
+            />
+          );
+        })}
     </div>
   );
 };
