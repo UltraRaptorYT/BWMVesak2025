@@ -35,8 +35,25 @@ const PersonExtractor: React.FC = () => {
   const [highScore, setHighScore] = useState<number>(
     parseInt(localStorage.getItem("highScore") || "0")
   );
+  const [isFirstSession, setIsFirstSession] = useState<boolean>(true);
 
+  const [gameStart, setGameStart] = useState<boolean>(false);
   const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
+
+  useEffect(() => {
+    const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
+
+    if (hasPlayedBefore === "true") {
+      setIsFirstSession(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (gameStart) {
+      sessionStorage.setItem("hasPlayed", "true");
+      setIsFirstSession(false);
+    }
+  }, [gameStart]);
 
   useEffect(() => {
     const loadModelAndStart = async () => {
@@ -256,8 +273,6 @@ const PersonExtractor: React.FC = () => {
     loadTF();
   }, []);
 
-  const [gameStart, setGameStart] = useState<boolean>(false);
-
   function whackAfflictions(affliction: Element) {
     setScore((prev) => prev + 1);
     affliction.remove();
@@ -420,8 +435,12 @@ const PersonExtractor: React.FC = () => {
           <div className="absolute h-full w-full top-0">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
               <p>Put your palms together</p>
-              {highScore > 0 && <p>High Score: {highScore}</p>}
-              {score > 0 && <p>Score: {score}</p>}
+              {!isFirstSession && (
+                <div>
+                  {highScore > 0 && <p>High Score: {highScore}</p>}
+                  <p>Score: {score}</p>
+                </div>
+              )}
             </div>
             {/* <Button
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
