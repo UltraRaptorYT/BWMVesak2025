@@ -8,19 +8,18 @@ import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
 import { Affliction } from "@/components/Affliction";
 import { cn } from "@/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-// import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 const PersonExtractor: React.FC = () => {
   const debug: boolean = true;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lightSizeRef = useRef<HTMLInputElement>(null);
+  const countdownRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
   const poseColor = "transparent";
@@ -30,6 +29,12 @@ const PersonExtractor: React.FC = () => {
   >([]);
   const [lightSize, setLightSize] = useState<number>(128);
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
+  const [countdown, setCountdown] = useState<number>(5);
+  const [countdownTimer, setCountdownTimer] = useState<number>(5);
+  const [score, setScore] = useState<number>(0);
+  const [highScore, setHighScore] = useState<number>(
+    parseInt(localStorage.getItem("highScore") || "0")
+  );
 
   const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
@@ -80,7 +85,6 @@ const PersonExtractor: React.FC = () => {
           results.multiHandLandmarks &&
           results.multiHandLandmarks.length > 0
         ) {
-          console.log(results.multiHandLandmarks);
           for (const landmarks of results.multiHandLandmarks) {
             const canvasRect = canvas.getBoundingClientRect();
             drawHand(ctx, landmarks, poseColor); // Check each hand landmark
@@ -255,12 +259,14 @@ const PersonExtractor: React.FC = () => {
   const [gameStart, setGameStart] = useState<boolean>(false);
 
   function whackAfflictions(affliction: Element) {
+    setScore((prev) => prev + 1);
     affliction.remove();
     setAfflictionArr((prev) => [...prev, <Affliction></Affliction>]);
   }
 
   function gameStartFunc() {
     // activate once
+    setScore(0);
     if (afflictionArr.length > 0) {
       return;
     }
@@ -288,6 +294,8 @@ const PersonExtractor: React.FC = () => {
       if (e.ctrlKey && e.code === "Backquote") {
         console.log("pressed");
         setShowAdmin((prev) => !prev);
+      } else if (e.ctrlKey && e.shiftKey) {
+        setGameStart(false);
       }
     };
 
@@ -297,10 +305,62 @@ const PersonExtractor: React.FC = () => {
     };
   }, []);
 
-  function handleLightSizeChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setLightSize(parseInt(e.target.value))
+  function handleSubmit() {
+    // Light Size
+    if (!lightSizeRef.current) {
+      toast.error("Fail to update - Light Size");
+      return;
+    }
+    setLightSize(parseInt(lightSizeRef.current.value));
+
+    // CountdownTimer
+    if (!countdownRef.current) {
+      toast.error("Fail to update - Light Size");
+      return;
+    }
+    setCountdownTimer(parseInt(countdownRef.current.value));
+
+    toast.success("Update successful");
+    setShowAdmin(false);
+    return;
   }
-  
+
+  useEffect(() => {
+    setCountdown(countdownTimer);
+  }, [countdownTimer]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (gameStart) {
+      gameStartFunc();
+      setCountdown(countdownTimer); // reset to full duration at game start
+
+      interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setAfflictionArr([]);
+            setGameStart(false);
+
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [gameStart]);
+
+  useEffect(() => {
+    const storedHighScore = parseInt(localStorage.getItem("highScore") || "0");
+    console.log(highScore, score, storedHighScore);
+    if (score > storedHighScore) {
+      localStorage.setItem("highScore", score.toString());
+      setHighScore(score);
+    }
+  }, [score]);
 
   return (
     <div className="relative w-full h-screen flex items-center justify-center mainBG">
@@ -317,11 +377,32 @@ const PersonExtractor: React.FC = () => {
           <CardHeader>
             <CardTitle>Admin Config</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col justify-center items-center gap-5">
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="lightSize">Light Size</Label>
-              <Input onChange={handleLightSizeChange} type="text" id="lightSize" placeholder="Light Size" value={lightSize} pattern="\d+" required/>
+              <Input
+                ref={lightSizeRef}
+                type="text"
+                id="lightSize"
+                placeholder="Light Size"
+                defaultValue={lightSize}
+                pattern="\d+"
+                required
+              />
             </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="countdown">Countdown</Label>
+              <Input
+                ref={countdownRef}
+                type="text"
+                id="countdown"
+                placeholder="Countdown"
+                defaultValue={countdown}
+                pattern="\d+"
+                required
+              />
+            </div>
+            <Button onClick={handleSubmit}>Submit</Button>
           </CardContent>
         </Card>
       )}
@@ -331,15 +412,17 @@ const PersonExtractor: React.FC = () => {
           className={cn(
             "h-full transition-opacity duration-500",
             gameStart ? "border-2 border-black" : "",
-            bgImageDataUrl ? "opacity-[0.85]" : "opacity-100"
+            gameStart ? "opacity-[0.85]" : "opacity-100"
           )}
         />
 
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
-            <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
-              Put your palms together
-            </p>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
+              <p>Put your palms together</p>
+              {highScore > 0 && <p>High Score: {highScore}</p>}
+              {score > 0 && <p>Score: {score}</p>}
+            </div>
             {/* <Button
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
               size="lg"
@@ -359,6 +442,18 @@ const PersonExtractor: React.FC = () => {
         )}
       </div>
 
+      {gameStart && (
+        <div className="absolute top-4 left-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+          Time: {countdown}s
+        </div>
+      )}
+
+      {gameStart && (
+        <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+          Score: {score}
+        </div>
+      )}
+
       {bgImageDataUrl &&
         gameStart &&
         lightPositions.map((pos, i) => {
@@ -376,6 +471,7 @@ const PersonExtractor: React.FC = () => {
             />
           );
         })}
+      <Toaster richColors />
     </div>
   );
 };
