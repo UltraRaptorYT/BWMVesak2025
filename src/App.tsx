@@ -29,8 +29,9 @@ const PersonExtractor: React.FC = () => {
   >([]);
   const [lightSize, setLightSize] = useState<number>(128);
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
-  const [countdown, setCountdown] = useState<number>(5);
-  const [countdownTimer, setCountdownTimer] = useState<number>(5);
+  const commonTimer = 60;
+  const [countdown, setCountdown] = useState<number>(commonTimer);
+  const [countdownTimer, setCountdownTimer] = useState<number>(commonTimer);
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(
     parseInt(localStorage.getItem("highScore") || "0")
@@ -377,6 +378,14 @@ const PersonExtractor: React.FC = () => {
     }
   }, [score]);
 
+  function clearStorage() {
+    localStorage.removeItem("highScore");
+    sessionStorage.removeItem("hasPlayed");
+    setShowAdmin(false);
+    toast.success("Cleared Storage");
+    window.location.reload();
+  }
+
   return (
     <div className="relative w-full h-screen flex items-center justify-center mainBG">
       <video ref={videoRef} className="hidden" />
@@ -412,12 +421,17 @@ const PersonExtractor: React.FC = () => {
                 type="text"
                 id="countdown"
                 placeholder="Countdown"
-                defaultValue={countdown}
+                defaultValue={countdownTimer}
                 pattern="\d+"
                 required
               />
             </div>
-            <Button onClick={handleSubmit}>Submit</Button>
+            <div className="flex gap-5">
+              <Button onClick={handleSubmit}>Submit</Button>
+              <Button onClick={clearStorage} variant={"secondary"}>
+                Clear storage
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -462,15 +476,14 @@ const PersonExtractor: React.FC = () => {
       </div>
 
       {gameStart && (
-        <div className="absolute top-4 left-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-          Time: {countdown}s
-        </div>
-      )}
-
-      {gameStart && (
-        <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-          Score: {score}
-        </div>
+        <>
+          <div className="absolute top-4 left-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+            Time: {countdown}s
+          </div>
+          <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+            Score: {score}
+          </div>
+        </>
       )}
 
       {bgImageDataUrl &&
