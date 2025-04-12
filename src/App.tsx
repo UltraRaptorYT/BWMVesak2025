@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, ReactNode } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import * as bodyPix from "@tensorflow-models/body-pix";
 import { drawHand } from "@/lib/hand_utils";
 import "@tensorflow/tfjs";
@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const lightSizeRef = useRef<HTMLInputElement>(null);
   const countdownRef = useRef<HTMLInputElement>(null);
+  const livesRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
   const poseColor = "transparent";
@@ -41,7 +42,8 @@ const App: React.FC = () => {
   const [lives, setLives] = useState<number>(commonLives);
   const [currentLives, setCurrentLives] = useState<number>(commonLives);
   const [gameStart, setGameStart] = useState<boolean>(false);
-  const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
+  type AfflictionData = { id: number };
+  const [afflictionArr, setAfflictionArr] = useState<AfflictionData[]>([]);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -277,21 +279,27 @@ const App: React.FC = () => {
   }, []);
 
   function removeLives() {
+    console.log("🔻 removing a life");
     setCurrentLives((prev) => Math.max(prev - 1, 0));
   }
 
   function whackAfflictions(affliction: Element) {
-    setScore((prev) => prev + 1);
-    // affliction.remove();
-    setAfflictionArr((prev) => [
-      ...prev,
-      <Affliction speed={2500} onMissed={removeLives}></Affliction>,
-    ]);
+    const idStr = affliction.getAttribute("data-affliction-id");
+    if (!idStr) return;
+    const id = parseInt(idStr);
+
+    // Remove from array
+    setAfflictionArr((prev) => {
+      // Add score
+      setScore((prev) => prev + 1);
+      return prev.filter((a) => a.id !== id);
+    });
   }
 
   function gameStartFunc() {
     // activate once
     setScore(0);
+    setCurrentLives(lives);
     if (afflictionArr.length > 0) {
       return;
     }
@@ -302,9 +310,9 @@ const App: React.FC = () => {
       setBgImageDataUrl(dataUrl);
     }
 
-    const afflictions = Array.from({ length: 5 }, (_, i) => (
-      <Affliction key={i} />
-    ));
+    const afflictions = Array.from({ length: 5 }, (_, i) => ({
+      id: Date.now() + i,
+    }));
     setAfflictionArr((prev) => [...prev, ...afflictions]);
   }
 
@@ -313,6 +321,14 @@ const App: React.FC = () => {
       gameStartFunc();
     }
   }, [gameStart]);
+
+  useEffect(() => {
+    if (currentLives <= 0) {
+      console.log("💀 Out of lives. Ending game.");
+      setGameStart(false);
+      setAfflictionArr([]);
+    }
+  }, [currentLives]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -345,6 +361,13 @@ const App: React.FC = () => {
     }
     setCountdownTimer(parseInt(countdownRef.current.value));
 
+    // Lives
+    if (!livesRef.current) {
+      toast.error("Fail to update - Light Size");
+      return;
+    }
+    setLives(parseInt(livesRef.current.value));
+
     toast.success("Update successful");
     setShowAdmin(false);
     return;
@@ -360,9 +383,9 @@ const App: React.FC = () => {
     if (gameStart) {
       gameStartFunc();
       setCountdown(countdownTimer); // reset to full duration at game start
-      setCurrentLives(lives);
       interval = setInterval(() => {
         setCountdown((prev) => {
+          console.log(afflictionArr.length);
           if (prev <= 1) {
             clearInterval(interval);
             setAfflictionArr([]);
@@ -380,7 +403,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const storedHighScore = parseInt(localStorage.getItem("highScore") || "0");
-    console.log(highScore, score, storedHighScore);
     if (score > storedHighScore) {
       localStorage.setItem("highScore", score.toString());
       setHighScore(score);
@@ -435,6 +457,18 @@ const App: React.FC = () => {
                 required
               />
             </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="lives">Lives</Label>
+              <Input
+                ref={livesRef}
+                type="text"
+                id="lives"
+                placeholder="Lives"
+                defaultValue={lives}
+                pattern="\d+"
+                required
+              />
+            </div>
             <div className="flex gap-5">
               <Button onClick={handleSubmit}>Submit</Button>
               <Button onClick={clearStorage} variant={"secondary"}>
@@ -477,8 +511,17 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="absolute h-full w-full top-0" id="afflictionDiv">
-            {afflictionArr.map((e, i) => (
-              <div key={i}>{e}</div>
+            {afflictionArr.map((a) => (
+              <Affliction
+                key={a.id}
+                id={a.id}
+                speed={2500}
+                onMissed={() => {
+                  console.log("🔥 onMissed triggered for", a.id); // <– THIS MUST FIRE
+                  removeLives();
+                  setAfflictionArr((prev) => prev.filter((x) => x.id !== a.id));
+                }}
+              />
             ))}
           </div>
         )}
@@ -490,15 +533,7 @@ const App: React.FC = () => {
             <div className="text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               Time: {countdown}s
             </div>
-            <div>
-              {[...new Array(currentLives)].map((_, i) => {
-                return (
-                  <div key={"lives" + i} className="text-white">
-                    heart
-                  </div>
-                );
-              })}
-            </div>
+            <div>{"❤️".repeat(currentLives)}</div>
           </div>
           <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
             Score: {score}
