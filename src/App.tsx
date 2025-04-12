@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
-const PersonExtractor: React.FC = () => {
+const App: React.FC = () => {
   const debug: boolean = true;
   const videoRef = useRef<HTMLVideoElement>(null);
   const lightSizeRef = useRef<HTMLInputElement>(null);
@@ -29,7 +29,7 @@ const PersonExtractor: React.FC = () => {
   >([]);
   const [lightSize, setLightSize] = useState<number>(128);
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
-  const commonTimer = 60;
+  const commonTimer = 45;
   const [countdown, setCountdown] = useState<number>(commonTimer);
   const [countdownTimer, setCountdownTimer] = useState<number>(commonTimer);
   const [score, setScore] = useState<number>(0);
@@ -37,7 +37,9 @@ const PersonExtractor: React.FC = () => {
     parseInt(localStorage.getItem("highScore") || "0")
   );
   const [isFirstSession, setIsFirstSession] = useState<boolean>(true);
-
+  const commonLives = 3;
+  const [lives, setLives] = useState<number>(commonLives);
+  const [currentLives, setCurrentLives] = useState<number>(commonLives);
   const [gameStart, setGameStart] = useState<boolean>(false);
   const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
@@ -274,10 +276,17 @@ const PersonExtractor: React.FC = () => {
     loadTF();
   }, []);
 
+  function removeLives() {
+    setCurrentLives((prev) => Math.max(prev - 1, 0));
+  }
+
   function whackAfflictions(affliction: Element) {
     setScore((prev) => prev + 1);
-    affliction.remove();
-    setAfflictionArr((prev) => [...prev, <Affliction></Affliction>]);
+    // affliction.remove();
+    setAfflictionArr((prev) => [
+      ...prev,
+      <Affliction speed={2500} onMissed={removeLives}></Affliction>,
+    ]);
   }
 
   function gameStartFunc() {
@@ -351,7 +360,7 @@ const PersonExtractor: React.FC = () => {
     if (gameStart) {
       gameStartFunc();
       setCountdown(countdownTimer); // reset to full duration at game start
-
+      setCurrentLives(lives);
       interval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -456,7 +465,7 @@ const PersonExtractor: React.FC = () => {
                 </div>
               )}
             </div>
-            {/* <Button
+            <Button
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
               size="lg"
               id="gameStartBtn"
@@ -464,7 +473,7 @@ const PersonExtractor: React.FC = () => {
               onClick={() => gameStartFunc()}
             >
               Game Start
-            </Button> */}
+            </Button>
           </div>
         ) : (
           <div className="absolute h-full w-full top-0" id="afflictionDiv">
@@ -477,8 +486,19 @@ const PersonExtractor: React.FC = () => {
 
       {gameStart && (
         <>
-          <div className="absolute top-4 left-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-            Time: {countdown}s
+          <div className="absolute top-4 left-4 z-10">
+            <div className="text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+              Time: {countdown}s
+            </div>
+            <div>
+              {[...new Array(currentLives)].map((_, i) => {
+                return (
+                  <div key={"lives" + i} className="text-white">
+                    heart
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
             Score: {score}
@@ -508,4 +528,4 @@ const PersonExtractor: React.FC = () => {
   );
 };
 
-export default PersonExtractor;
+export default App;

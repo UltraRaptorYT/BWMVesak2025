@@ -114,6 +114,7 @@ export function isPraying(pose: poseDetection.Pose): boolean {
   const rightWrist = getKeypoint(pose, "right_wrist");
   // const leftElbow = getKeypoint(pose, "left_elbow");
   // const rightElbow = getKeypoint(pose, "right_elbow");
+  // console.log(leftWrist, rightWrist);
 
   if (!leftWrist || !rightWrist) return false;
 
@@ -128,5 +129,5 @@ export function isPraying(pose: poseDetection.Pose): boolean {
   //   leftElbow.y - rightElbow.y
   // );
 
-  return wristDistance <= 70 && verticalAlign <= 50;
+  return wristDistance <= 90 && verticalAlign <= 70;
 }
