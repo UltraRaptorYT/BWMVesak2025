@@ -330,14 +330,30 @@ const App: React.FC = () => {
 
   const handleRemove = (id: number, wasWhacked: boolean) => {
     console.log("WHACKED", id);
+
+    const shouldSpawnNew = Math.random() < 0.30; // 30% chance
+
     setAfflictionArr((prev) => {
-      return prev.map((a) => {
+      const updated = prev.map((a) => {
         if (a.id === id && !a.wasWhacked) {
           return { ...a, shouldHide: true, wasWhacked: true };
         }
         return a;
       });
+
+      if (shouldSpawnNew) {
+        const newAffliction = {
+          id: Date.now(),
+          shouldHide: false,
+          wasWhacked: false,
+          type: enemyList[Math.floor(Math.random() * enemyList.length)].type,
+        };
+        return [...updated, newAffliction];
+      }
+
+      return updated;
     });
+
     if (wasWhacked) {
       setScore((p) => p + 1);
     } else {
@@ -579,7 +595,7 @@ const App: React.FC = () => {
                     ] as const
                   )[Math.floor(Math.random() * 4)]
                 }
-                speed={enemyList.filter((e) => a.type == e.type)[0].speed}
+                speed={enemyList.find((e) => e.type === a.type)?.speed}
                 onLanded={handleRemove}
                 content={a.type}
               />
@@ -587,6 +603,8 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
+
+      {gameStart && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl">❤️</div>}
 
       {gameStart && (
         <>

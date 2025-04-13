@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const enemyList = [
-  { type: "ignorance", speed: 5 },
-  { type: "greed", speed: 4 },
-  { type: "anger", speed: 3 },
+  { type: "ignorance", speed: 6 },
+  { type: "greed", speed: 5 },
+  { type: "anger", speed: 4 },
 ];
