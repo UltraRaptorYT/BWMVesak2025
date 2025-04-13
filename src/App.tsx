@@ -6,7 +6,6 @@ import { drawKeypoints, drawSkeleton, isPraying } from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
-// import { Affliction } from "@/components/Affliction";
 import { cn, enemyList } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
-// import { AnimatePresence } from "framer-motion";
+import { FaHeart } from "react-icons/fa";
 
 const App: React.FC = () => {
   const debug: boolean = true;
@@ -23,6 +22,7 @@ const App: React.FC = () => {
   const lightSizeRef = useRef<HTMLInputElement>(null);
   const countdownRef = useRef<HTMLInputElement>(null);
   const livesRef = useRef<HTMLInputElement>(null);
+  const spawnTimingRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
   const poseColor = "transparent";
@@ -52,7 +52,8 @@ const App: React.FC = () => {
   };
   const [afflictionArr, setAfflictionArr] = useState<AfflictionData[]>([]);
   const hasLifeBeenRemovedRef = useRef(false);
-  const spawnTiming = 1000;
+  const [spawnTiming, setSpawnTiming] = useState<number>(750);
+  const spawnChance = 35;
   const [gameOver, setGameOver] = useState<boolean>(false);
 
   useEffect(() => {
@@ -331,7 +332,7 @@ const App: React.FC = () => {
   const handleRemove = (id: number, wasWhacked: boolean) => {
     console.log("WHACKED", id);
 
-    const shouldSpawnNew = Math.random() < 0.30; // 30% chance
+    const shouldSpawnNew = Math.random() < spawnChance / 100;
 
     setAfflictionArr((prev) => {
       const updated = prev.map((a) => {
@@ -431,6 +432,13 @@ const App: React.FC = () => {
       return;
     }
     setLives(parseInt(livesRef.current.value));
+
+    // Spawn Timing
+    if (!spawnTimingRef.current) {
+      toast.error("Fail to update - Light Size");
+      return;
+    }
+    setSpawnTiming(parseInt(spawnTimingRef.current.value));
 
     toast.success("Update successful");
     setShowAdmin(false);
@@ -537,6 +545,18 @@ const App: React.FC = () => {
                 required
               />
             </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="spawnTiming">Spawn Timing</Label>
+              <Input
+                ref={spawnTimingRef}
+                type="text"
+                id="spawnTiming"
+                placeholder="Spawn Timing"
+                defaultValue={spawnTiming}
+                pattern="\d+"
+                required
+              />
+            </div>
             <div className="flex gap-5">
               <Button onClick={handleSubmit}>Submit</Button>
               <Button onClick={clearStorage} variant={"secondary"}>
@@ -604,15 +624,23 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {gameStart && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl">❤️</div>}
+      {gameStart && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl">
+          ❤️
+        </div>
+      )}
 
       {gameStart && (
         <>
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-4 left-4 z-10 flex flex-col items-start justify-center">
             <div className="text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               Time: {countdown}s
             </div>
-            <div>{"❤️".repeat(currentLives)}</div>
+            <div className="flex gap-2">
+              {Array.from({ length: currentLives }).map((_, i) => (
+                <FaHeart key={"heart" + i} size={48} color="white" />
+              ))}
+            </div>
           </div>
           <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
             Score: {score}
@@ -626,7 +654,7 @@ const App: React.FC = () => {
           return (
             <div
               key={i}
-              className={`rounded-full bg-yellow-300 blur-xl pointer-events-none transition-transform duration-100`}
+              className={`rounded-full bg-yellow-300 blur-xl pointer-events-none transition-transform duration-100 lightPos `}
               style={{
                 position: "fixed",
                 left: pos.x - lightSize / 2,

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
+import { getRandomNumber } from "@/lib/utils";
 
 type FlyingBoxProps = {
   id: number;
@@ -24,10 +25,22 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startPos = {
-    "top-left": { x: "-100vw", y: "-100vh" },
-    "top-right": { x: "100vw", y: "-100vh" },
-    "bottom-left": { x: "-100vw", y: "100vh" },
-    "bottom-right": { x: "100vw", y: "100vh" },
+    "top-left": {
+      x: `${-1 * getRandomNumber(50, 150)}vw`,
+      y: `${-1 * getRandomNumber(50, 150)}vh`,
+    },
+    "top-right": {
+      x: `${getRandomNumber(50, 150)}vw`,
+      y: `${-1 * getRandomNumber(50, 150)}vh`,
+    },
+    "bottom-left": {
+      x: `${-1 * getRandomNumber(50, 150)}vw`,
+      y: `${getRandomNumber(50, 150)}vh`,
+    },
+    "bottom-right": {
+      x: `${getRandomNumber(50, 150)}vw`,
+      y: `${getRandomNumber(50, 150)}vh`,
+    },
   };
 
   useEffect(() => {
