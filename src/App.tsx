@@ -7,7 +7,7 @@ import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
 // import { Affliction } from "@/components/Affliction";
-import { cn } from "@/lib/utils";
+import { cn, enemyList } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,9 +48,12 @@ const App: React.FC = () => {
     id: number;
     shouldHide: boolean;
     wasWhacked: boolean;
+    type: string;
   };
   const [afflictionArr, setAfflictionArr] = useState<AfflictionData[]>([]);
   const hasLifeBeenRemovedRef = useRef(false);
+  const spawnTiming = 1000;
+  const [gameOver, setGameOver] = useState<boolean>(false);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -307,6 +310,24 @@ const App: React.FC = () => {
     });
   }
 
+  useEffect(() => {
+    if (!gameStart) return;
+
+    const spawnInterval = setInterval(() => {
+      const newAffliction = {
+        id: Date.now(),
+        shouldHide: false,
+        wasWhacked: false,
+        type: ((arr) => arr[Math.floor(Math.random() * arr.length)])(
+          enemyList.map((e) => e.type)
+        ),
+      };
+      setAfflictionArr((prev) => [...prev, newAffliction]);
+    }, spawnTiming); // spawn every 4 seconds (you can adjust)
+
+    return () => clearInterval(spawnInterval);
+  }, [gameStart]);
+
   const handleRemove = (id: number, wasWhacked: boolean) => {
     console.log("WHACKED", id);
     setAfflictionArr((prev) => {
@@ -333,6 +354,7 @@ const App: React.FC = () => {
     // activate once
     setScore(0);
     setCurrentLives(lives);
+    setGameOver(false);
     if (afflictionArr.length > 0) {
       return;
     }
@@ -343,18 +365,19 @@ const App: React.FC = () => {
       setBgImageDataUrl(dataUrl);
     }
 
-    const afflictions = Array.from({ length: 2 }, (_, i) => ({
-      id: Date.now() + i,
-      shouldHide: false,
-      wasWhacked: false,
-    }));
-    setAfflictionArr((prev) => [...prev, ...afflictions]);
+    // const afflictions = Array.from({ length: 2 }, (_, i) => ({
+    //   id: Date.now() + i,
+    //   shouldHide: false,
+    //   wasWhacked: false,
+    // }));
+    // setAfflictionArr((prev) => [...prev, ...afflictions]);
   }
 
   useEffect(() => {
     if (currentLives <= 0) {
       console.log("💀 Out of lives. Ending game.");
       setGameStart(false);
+      setGameOver(true);
       setAfflictionArr([]);
     }
   }, [currentLives]);
@@ -520,11 +543,12 @@ const App: React.FC = () => {
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
-              <p>Put your palms together</p>
+              {gameOver && <div>GAME OVER!</div>}
+              <p>Put your palms together {gameOver && "to play again"}</p>
               {!isFirstSession && (
                 <div>
                   {highScore > 0 && <p>High Score: {highScore}</p>}
-                  <p>Score: {score}</p>
+                  {gameOver && <p>Score: {score}</p>}
                 </div>
               )}
             </div>
@@ -540,14 +564,24 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="absolute h-full w-full top-0" id="afflictionDiv">
-            {afflictionArr.map((a, i) => (
+            {afflictionArr.map((a) => (
               <FlyingBox
                 key={a.id}
                 id={a.id}
                 shouldHide={a.shouldHide}
-                fromCorner={i % 2 === 0 ? "top-left" : "bottom-right"}
-                speed={7}
+                fromCorner={
+                  (
+                    [
+                      "top-left",
+                      "top-right",
+                      "bottom-left",
+                      "bottom-right",
+                    ] as const
+                  )[Math.floor(Math.random() * 4)]
+                }
+                speed={enemyList.filter((e) => a.type == e.type)[0].speed}
                 onLanded={handleRemove}
+                content={a.type}
               />
             ))}
           </div>

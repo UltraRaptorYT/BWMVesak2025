@@ -82,6 +82,7 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        background: "pink",
       }}
     >
       {isImage(content) ? (
