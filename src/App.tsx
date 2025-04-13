@@ -6,7 +6,7 @@ import { drawKeypoints, drawSkeleton, isPraying } from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
-import { Affliction } from "@/components/Affliction";
+// import { Affliction } from "@/components/Affliction";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import FlyingBox from "@/components/FlyingBox";
+// import { AnimatePresence } from "framer-motion";
 
 const App: React.FC = () => {
   const debug: boolean = true;
@@ -42,8 +44,13 @@ const App: React.FC = () => {
   const [lives, setLives] = useState<number>(commonLives);
   const [currentLives, setCurrentLives] = useState<number>(commonLives);
   const [gameStart, setGameStart] = useState<boolean>(false);
-  type AfflictionData = { id: number };
+  type AfflictionData = {
+    id: number;
+    shouldHide: boolean;
+    wasWhacked: boolean;
+  };
   const [afflictionArr, setAfflictionArr] = useState<AfflictionData[]>([]);
+  const hasLifeBeenRemovedRef = useRef(false);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -288,15 +295,41 @@ const App: React.FC = () => {
     if (!idStr) return;
     const id = parseInt(idStr);
 
-    // Remove from array
+    // Prevent double whack
     setAfflictionArr((prev) => {
-      // Add score
-      setScore((prev) => prev + 1);
-      return prev.filter((a) => a.id !== id);
+      const alreadyWhacked = prev.find((a) => a.id === id)?.wasWhacked;
+      if (alreadyWhacked) return prev;
+
+      (window as any)[`whackAffliction_${id}`]?.();
+      return prev.map((a) =>
+        a.id === id ? { ...a, wasWhacked: true, shouldHide: true } : a
+      );
     });
   }
 
+  const handleRemove = (id: number, wasWhacked: boolean) => {
+    console.log("WHACKED", id);
+    setAfflictionArr((prev) => {
+      return prev.map((a) => {
+        if (a.id === id && !a.wasWhacked) {
+          return { ...a, shouldHide: true, wasWhacked: true };
+        }
+        return a;
+      });
+    });
+    if (wasWhacked) {
+      setScore((p) => p + 1);
+    } else {
+      removeLives();
+    }
+  };
+
+  useEffect(() => {
+    console.log(afflictionArr, "HELLIOAS");
+  }, [afflictionArr]);
+
   function gameStartFunc() {
+    hasLifeBeenRemovedRef.current = false;
     // activate once
     setScore(0);
     setCurrentLives(lives);
@@ -310,17 +343,13 @@ const App: React.FC = () => {
       setBgImageDataUrl(dataUrl);
     }
 
-    const afflictions = Array.from({ length: 5 }, (_, i) => ({
+    const afflictions = Array.from({ length: 2 }, (_, i) => ({
       id: Date.now() + i,
+      shouldHide: false,
+      wasWhacked: false,
     }));
     setAfflictionArr((prev) => [...prev, ...afflictions]);
   }
-
-  useEffect(() => {
-    if (gameStart) {
-      gameStartFunc();
-    }
-  }, [gameStart]);
 
   useEffect(() => {
     if (currentLives <= 0) {
@@ -418,7 +447,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-screen flex items-center justify-center mainBG">
+    <div className="relative w-full fullHeight overflow-hidden flex items-center justify-center mainBG">
       <video ref={videoRef} className="hidden" />
       {bgImageDataUrl && gameStart && (
         <img
@@ -499,7 +528,7 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
-            <Button
+            {/* <Button
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl h-16"
               size="lg"
               id="gameStartBtn"
@@ -507,20 +536,18 @@ const App: React.FC = () => {
               onClick={() => gameStartFunc()}
             >
               Game Start
-            </Button>
+            </Button> */}
           </div>
         ) : (
           <div className="absolute h-full w-full top-0" id="afflictionDiv">
-            {afflictionArr.map((a) => (
-              <Affliction
+            {afflictionArr.map((a, i) => (
+              <FlyingBox
                 key={a.id}
                 id={a.id}
-                speed={2500}
-                onMissed={() => {
-                  console.log("🔥 onMissed triggered for", a.id); // <– THIS MUST FIRE
-                  removeLives();
-                  setAfflictionArr((prev) => prev.filter((x) => x.id !== a.id));
-                }}
+                shouldHide={a.shouldHide}
+                fromCorner={i % 2 === 0 ? "top-left" : "bottom-right"}
+                speed={7}
+                onLanded={handleRemove}
               />
             ))}
           </div>
