@@ -376,9 +376,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (currentLives <= 0) {
       console.log("💀 Out of lives. Ending game.");
-      setGameStart(false);
-      setGameOver(true);
-      setAfflictionArr([]);
+      gameEnded();
     }
   }, [currentLives]);
 
@@ -387,8 +385,6 @@ const App: React.FC = () => {
       if (e.ctrlKey && e.code === "Backquote") {
         console.log("pressed");
         setShowAdmin((prev) => !prev);
-      } else if (e.ctrlKey && e.shiftKey) {
-        setGameStart(false);
       }
     };
 
@@ -429,6 +425,12 @@ const App: React.FC = () => {
     setCountdown(countdownTimer);
   }, [countdownTimer]);
 
+  function gameEnded() {
+    setGameStart(false);
+    setGameOver(true);
+    setAfflictionArr([]);
+  }
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -440,9 +442,7 @@ const App: React.FC = () => {
           console.log(afflictionArr.length);
           if (prev <= 1) {
             clearInterval(interval);
-            setAfflictionArr([]);
-            setGameStart(false);
-
+            gameEnded();
             return 0;
           }
           return prev - 1;
