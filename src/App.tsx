@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
+import popSfxAudio from "@/assets/Pop.wav"
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
@@ -57,6 +58,7 @@ const App: React.FC = () => {
   const spawnChance = 35;
   const [gameOver, setGameOver] = useState<boolean>(false);
   const bgAudioRef = useRef<HTMLAudioElement>(null);
+  const popSfxRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -301,6 +303,11 @@ const App: React.FC = () => {
     if (!idStr) return;
     const id = parseInt(idStr);
 
+    const sfx = popSfxRef.current?.cloneNode() as HTMLAudioElement;
+    sfx?.play().catch((e) => {
+      console.error("POP sound failed:", e);
+    });
+
     // Prevent double whack
     setAfflictionArr((prev) => {
       const alreadyWhacked = prev.find((a) => a.id === id)?.wasWhacked;
@@ -513,6 +520,11 @@ const App: React.FC = () => {
         <source src={bgAudio} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
+      <audio ref={popSfxRef}>
+        <source src={popSfxAudio} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+
 
       {bgImageDataUrl && gameStart && (
         <img
