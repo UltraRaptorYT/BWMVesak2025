@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
-import popSfxAudio from "@/assets/Pop.wav"
+import popSfxAudio from "@/assets/Pop.wav";
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
@@ -58,7 +58,6 @@ const App: React.FC = () => {
   const spawnChance = 35;
   const [gameOver, setGameOver] = useState<boolean>(false);
   const bgAudioRef = useRef<HTMLAudioElement>(null);
-  const popSfxRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -229,8 +228,12 @@ const App: React.FC = () => {
           offscreenCtx.restore();
 
           // 2. Run segmentation on flipped frame
-          const segmentation = await net.segmentPerson(offscreenCanvas, {scoreThreshold: 0.2});
-          const poses = await detector.estimatePoses(offscreenCanvas, {scoreThreshold: 0.4});
+          const segmentation = await net.segmentPerson(offscreenCanvas, {
+            scoreThreshold: 0.2,
+          });
+          const poses = await detector.estimatePoses(offscreenCanvas, {
+            scoreThreshold: 0.4,
+          });
 
           // 3. Flip main canvas context
           ctx.save(); // ⬅️ Save original state
@@ -303,8 +306,8 @@ const App: React.FC = () => {
     if (!idStr) return;
     const id = parseInt(idStr);
 
-    const sfx = popSfxRef.current?.cloneNode() as HTMLAudioElement;
-    sfx?.play().catch((e) => {
+    const sfx = new Audio(popSfxAudio);
+    sfx.play().catch((e) => {
       console.error("POP sound failed:", e);
     });
 
@@ -520,11 +523,6 @@ const App: React.FC = () => {
         <source src={bgAudio} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
-      <audio ref={popSfxRef}>
-        <source src={popSfxAudio} type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
-
 
       {bgImageDataUrl && gameStart && (
         <img
