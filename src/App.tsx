@@ -229,8 +229,8 @@ const App: React.FC = () => {
           offscreenCtx.restore();
 
           // 2. Run segmentation on flipped frame
-          const segmentation = await net.segmentPerson(offscreenCanvas);
-          const poses = await detector.estimatePoses(offscreenCanvas);
+          const segmentation = await net.segmentPerson(offscreenCanvas, {scoreThreshold: 0.2});
+          const poses = await detector.estimatePoses(offscreenCanvas, {scoreThreshold: 0.4});
 
           // 3. Flip main canvas context
           ctx.save(); // ⬅️ Save original state
