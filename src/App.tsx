@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
-// import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
   const debug: boolean = true;
@@ -56,6 +56,7 @@ const App: React.FC = () => {
   const [spawnTiming, setSpawnTiming] = useState<number>(750);
   const spawnChance = 35;
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const bgAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -71,9 +72,6 @@ const App: React.FC = () => {
       setIsFirstSession(false);
     }
   }, [gameStart]);
-
-  const bgAudioRef = useRef<HTMLAudioElement>(null);
-  const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
   useEffect(() => {
     const loadModelAndStart = async () => {
@@ -495,10 +493,6 @@ const App: React.FC = () => {
     setShowAdmin(false);
     toast.success("Cleared Storage");
     window.location.reload();
-  }
-
-  function handleLightSizeChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setLightSize(parseInt(e.target.value));
   }
 
   useEffect(() => {
