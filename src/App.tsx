@@ -10,11 +10,12 @@ import { cn, enemyList } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
+import bgAudio from "@/assets/bgAudio.mp3";
+// import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
   const debug: boolean = true;
@@ -70,6 +71,9 @@ const App: React.FC = () => {
       setIsFirstSession(false);
     }
   }, [gameStart]);
+
+  const bgAudioRef = useRef<HTMLAudioElement>(null);
+  const [afflictionArr, setAfflictionArr] = useState<ReactNode[]>([]);
 
   useEffect(() => {
     const loadModelAndStart = async () => {
@@ -493,9 +497,29 @@ const App: React.FC = () => {
     window.location.reload();
   }
 
+  function handleLightSizeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setLightSize(parseInt(e.target.value));
+  }
+
+  useEffect(() => {
+    if (gameStart && bgAudioRef.current) {
+      bgAudioRef.current.play().catch((e) => {
+        console.error("Audio play failed:", e);
+      });
+    } else if (!gameStart && bgAudioRef.current) {
+      bgAudioRef.current.pause();
+      bgAudioRef.current.currentTime = 0; // optional: reset playback
+    }
+  }, [gameStart]);
+
   return (
     <div className="relative w-full fullHeight overflow-hidden flex items-center justify-center mainBG">
       <video ref={videoRef} className="hidden" />
+      <audio ref={bgAudioRef} loop>
+        <source src={bgAudio} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+
       {bgImageDataUrl && gameStart && (
         <img
           src={bgImageDataUrl}
