@@ -109,14 +109,13 @@ function getKeypoint(pose: poseDetection.Pose, name: string): Keypoint | null {
   return point?.score != null && point.score > 0.35 ? point : null;
 }
 
-export function isPraying(pose: poseDetection.Pose): boolean {
+export function detectPraying(pose: poseDetection.Pose) {
   const leftWrist = getKeypoint(pose, "left_wrist");
   const rightWrist = getKeypoint(pose, "right_wrist");
-  // const leftElbow = getKeypoint(pose, "left_elbow");
-  // const rightElbow = getKeypoint(pose, "right_elbow");
-  // console.log(leftWrist, rightWrist);
 
-  if (!leftWrist || !rightWrist) return false;
+  if (!leftWrist || !rightWrist) {
+    return { isPraying: false, wrists: null };
+  }
 
   const wristDistance = Math.hypot(
     leftWrist.x - rightWrist.x,
@@ -124,10 +123,21 @@ export function isPraying(pose: poseDetection.Pose): boolean {
   );
 
   const verticalAlign = Math.abs(leftWrist.y - rightWrist.y);
-  // const elbowDistance = Math.hypot(
-  //   leftElbow.x - rightElbow.x,
-  //   leftElbow.y - rightElbow.y
-  // );
 
-  return wristDistance <= 90 && verticalAlign <= 70;
+  const isPraying = wristDistance <= 90 && verticalAlign <= 70;
+
+  return {
+    isPraying,
+    wrists: { leftWrist, rightWrist },
+  };
+}
+
+export function getMidpoint(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number }
+) {
+  return {
+    x: (p1.x + p2.x) / 2,
+    y: (p1.y + p2.y) / 2,
+  };
 }

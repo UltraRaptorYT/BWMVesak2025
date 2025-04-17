@@ -2,7 +2,12 @@ import React, { useRef, useEffect, useState } from "react";
 import * as bodyPix from "@tensorflow-models/body-pix";
 import { drawHand } from "@/lib/hand_utils";
 import "@tensorflow/tfjs";
-import { drawKeypoints, drawSkeleton, isPraying } from "@/lib/pose_utils";
+import {
+  drawKeypoints,
+  drawSkeleton,
+  detectPraying,
+  getMidpoint,
+} from "@/lib/pose_utils";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "./App.css";
@@ -16,6 +21,7 @@ import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
 import popSfxAudio from "@/assets/Pop.wav";
+import boingSfxAudio from "@/assets/Low Boing.wav";
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
@@ -27,6 +33,8 @@ const App: React.FC = () => {
   const spawnTimingRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
+  const hasSetHeartRef = useRef(false);
+
   const poseColor = "transparent";
   const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
   const [lightPositions, setLightPositions] = useState<
@@ -58,6 +66,8 @@ const App: React.FC = () => {
   const spawnChance = 35;
   const [gameOver, setGameOver] = useState<boolean>(false);
   const bgAudioRef = useRef<HTMLAudioElement>(null);
+  const [heartX, setHeartX] = useState<number>(0);
+  const [heartY, setHeartY] = useState<number>(0);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -229,10 +239,11 @@ const App: React.FC = () => {
 
           // 2. Run segmentation on flipped frame
           const segmentation = await net.segmentPerson(offscreenCanvas, {
-            scoreThreshold: 0.2,
+            segmentationThreshold: 0.25,
+            nmsRadius: 30,
           });
           const poses = await detector.estimatePoses(offscreenCanvas, {
-            scoreThreshold: 0.4,
+            scoreThreshold: 0.3,
           });
 
           // 3. Flip main canvas context
@@ -271,7 +282,60 @@ const App: React.FC = () => {
             drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, poseColor);
             drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, poseColor);
           }
-          if (isPraying(poses[0]) && !gameStart) {
+          const { isPraying, wrists } = detectPraying(poses[0]);
+
+          if (!hasSetHeartRef.current && !gameStart && isPraying && wrists) {
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const canvasRect = canvas.getBoundingClientRect();
+              let { x, y } = getMidpoint(wrists.leftWrist, wrists.rightWrist);
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.save(); // <- start flipped state
+                ctx.scale(-1, 1);
+                ctx.translate(-canvas.width, 0);
+
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = "red";
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(
+                  wrists.leftWrist.x,
+                  wrists.leftWrist.y,
+                  10,
+                  0,
+                  2 * Math.PI
+                );
+                ctx.fillStyle = "green";
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(
+                  wrists.rightWrist.x,
+                  wrists.rightWrist.y,
+                  10,
+                  0,
+                  2 * Math.PI
+                );
+                ctx.fillStyle = "blue";
+                ctx.fill();
+
+                ctx.restore();
+              }
+
+              // x and y are in canvas pixels
+              const xScreen =
+                canvasRect.left + (x / canvas.width) * canvasRect.width;
+              const yScreen =
+                canvasRect.top + (y / canvas.height) * canvasRect.height;
+
+              setHeartX(xScreen);
+              setHeartY(yScreen);
+            }
+
+            hasSetHeartRef.current = true;
             setGameStart(true);
           }
 
@@ -298,6 +362,10 @@ const App: React.FC = () => {
 
   function removeLives() {
     console.log("🔻 removing a life");
+    const sfx = new Audio(boingSfxAudio);
+    sfx.play().catch((e) => {
+      console.error("Boing sound failed:", e);
+    });
     setCurrentLives((prev) => Math.max(prev - 1, 0));
   }
 
@@ -374,9 +442,9 @@ const App: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    console.log(afflictionArr, "HELLIOAS");
-  }, [afflictionArr]);
+  // useEffect(() => {
+  //   console.log(afflictionArr, "HELLIOAS");
+  // }, [afflictionArr]);
 
   function gameStartFunc() {
     hasLifeBeenRemovedRef.current = false;
@@ -465,6 +533,7 @@ const App: React.FC = () => {
     setGameStart(false);
     setGameOver(true);
     setAfflictionArr([]);
+    hasSetHeartRef.current = false;
   }
 
   useEffect(() => {
@@ -475,7 +544,6 @@ const App: React.FC = () => {
       setCountdown(countdownTimer); // reset to full duration at game start
       interval = setInterval(() => {
         setCountdown((prev) => {
-          console.log(afflictionArr.length);
           if (prev <= 1) {
             clearInterval(interval);
             gameEnded();
@@ -507,6 +575,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (gameStart && bgAudioRef.current) {
+      bgAudioRef.current.volume = 0.25;
       bgAudioRef.current.play().catch((e) => {
         console.error("Audio play failed:", e);
       });
@@ -633,6 +702,7 @@ const App: React.FC = () => {
                 key={a.id}
                 id={a.id}
                 shouldHide={a.shouldHide}
+                targetPos={{ x: heartX, y: heartY }}
                 fromCorner={
                   (
                     [
@@ -653,7 +723,14 @@ const App: React.FC = () => {
       </div>
 
       {gameStart && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl">
+        <div
+          className="fixed text-3xl"
+          style={{
+            left: `${heartX}px`,
+            top: `${heartY}px`,
+            transform: "translate(-50%, -50%)", // ✅ center align
+          }}
+        >
           ❤️
         </div>
       )}
