@@ -6,6 +6,7 @@ type FlyingBoxProps = {
   id: number;
   onLanded: (id: number, wasWhacked: boolean) => void;
   fromCorner?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  targetPos?: { x: number | string; y: number | string };
   speed?: number;
   content?: string;
   shouldHide: boolean;
@@ -15,6 +16,7 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
   id,
   onLanded,
   fromCorner = "top-left",
+  targetPos = { x: 0, y: 0 },
   speed = 1,
   content = "🚀",
   shouldHide,
@@ -49,8 +51,8 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
 
   useEffect(() => {
     controls.start({
-      x: 0,
-      y: 0,
+      x: targetPos.x ?? 0,
+      y: targetPos.y ?? 0,
       transition: { duration: speed, ease: "linear" },
     });
 
@@ -88,9 +90,9 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
       data-affliction-id={id}
       style={{
         position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
+        top: 0,
+        left: 0,
+        // transform: "translate(-50%, -50%)",
         zIndex: 999,
         display: "flex",
         alignItems: "center",
