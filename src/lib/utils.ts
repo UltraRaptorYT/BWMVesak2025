@@ -6,9 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const enemyList = [
-  { type: "ignorance", speed: 6 },
-  { type: "greed", speed: 5 },
-  { type: "anger", speed: 4 },
+  { type: "ignorance", speed: 0.5 },
+  { type: "greed", speed: 1 },
+  { type: "anger", speed: 1.5 },
 ];
 
 export function getRandomNumber(min: number, max: number): number {
