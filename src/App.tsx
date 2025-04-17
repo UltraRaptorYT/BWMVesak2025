@@ -21,7 +21,7 @@ import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
 import popSfxAudio from "@/assets/Pop.wav";
-import boingSfxAudio from "@/assets/Low Boing.wav";
+import boingSfxAudio from "@/assets/Boing.mp3";
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
@@ -289,43 +289,7 @@ const App: React.FC = () => {
             if (canvas) {
               const canvasRect = canvas.getBoundingClientRect();
               let { x, y } = getMidpoint(wrists.leftWrist, wrists.rightWrist);
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                ctx.save(); // <- start flipped state
-                ctx.scale(-1, 1);
-                ctx.translate(-canvas.width, 0);
 
-                ctx.beginPath();
-                ctx.arc(x, y, 10, 0, 2 * Math.PI);
-                ctx.fillStyle = "red";
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(
-                  wrists.leftWrist.x,
-                  wrists.leftWrist.y,
-                  10,
-                  0,
-                  2 * Math.PI
-                );
-                ctx.fillStyle = "green";
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(
-                  wrists.rightWrist.x,
-                  wrists.rightWrist.y,
-                  10,
-                  0,
-                  2 * Math.PI
-                );
-                ctx.fillStyle = "blue";
-                ctx.fill();
-
-                ctx.restore();
-              }
-
-              // x and y are in canvas pixels
               const xScreen =
                 canvasRect.left + (x / canvas.width) * canvasRect.width;
               const yScreen =
@@ -663,11 +627,11 @@ const App: React.FC = () => {
           </CardContent>
         </Card>
       )}
-      <div className="absolute h-full top-0 left-1/2 -translate-x-1/2">
+      <div className="absolute w-full h-full top-0 left-1/2 -translate-x-1/2">
         <canvas
           ref={canvasRef}
           className={cn(
-            "h-full transition-opacity duration-500",
+            "h-full transition-opacity duration-500 mx-auto",
             gameStart ? "border-2 border-black" : "",
             gameStart ? "opacity-[0.85]" : "opacity-100"
           )}
@@ -713,7 +677,7 @@ const App: React.FC = () => {
                     ] as const
                   )[Math.floor(Math.random() * 4)]
                 }
-                speed={enemyList.find((e) => e.type === a.type)?.speed}
+                speed={enemyList.find((e) => e.type === a.type)?.speed ?? 1}
                 onLanded={handleRemove}
                 content={a.type}
               />
