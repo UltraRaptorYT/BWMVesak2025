@@ -539,7 +539,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (gameStart && bgAudioRef.current) {
-      bgAudioRef.current.volume = 0.25;
+      bgAudioRef.current.volume = 0;
       bgAudioRef.current.play().catch((e) => {
         console.error("Audio play failed:", e);
       });
