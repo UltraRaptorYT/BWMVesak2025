@@ -6,9 +6,24 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const enemyList = [
-  { type: "ignorance", speed: 0.5 },
-  { type: "greed", speed: 1 },
-  { type: "anger", speed: 1.5 },
+  {
+    type: "ignorance",
+    speed: 0.5,
+    image: "/Ignorance.gif",
+    filter: "hue-rotate(-50deg) drop-shadow(0px 0px 25px red)",
+  },
+  {
+    type: "greed",
+    speed: 1,
+    image: "/Greed.gif",
+    filter: "saturate(75%) drop-shadow(0px 0px 25px red)",
+  },
+  {
+    type: "anger",
+    speed: 1.5,
+    image: "/Anger.gif",
+    filter: "sepia(50%) hue-rotate(-140deg) drop-shadow(0px 0px 25px red)",
+  },
 ];
 
 export function getRandomNumber(min: number, max: number): number {

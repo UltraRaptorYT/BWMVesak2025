@@ -59,6 +59,7 @@ const App: React.FC = () => {
     shouldHide: boolean;
     wasWhacked: boolean;
     type: string;
+    image: string | undefined;
   };
   const [afflictionArr, setAfflictionArr] = useState<AfflictionData[]>([]);
   const hasLifeBeenRemovedRef = useRef(false);
@@ -209,6 +210,7 @@ const App: React.FC = () => {
         if (!ctx) return;
 
         const backgroundImage = new Image();
+        backgroundImage.src = "./Game_Background.gif";
         backgroundImage.src = "./1.jpg";
         await new Promise((res) => (backgroundImage.onload = res));
 
@@ -359,13 +361,18 @@ const App: React.FC = () => {
     if (!gameStart) return;
 
     const spawnInterval = setInterval(() => {
+      const randomType = (() => {
+        const types = enemyList.map((e) => e.type);
+        return types[Math.floor(Math.random() * types.length)];
+      })();
+
+      const correspondingEnemy = enemyList.find((e) => e.type === randomType);
       const newAffliction = {
         id: Date.now(),
         shouldHide: false,
         wasWhacked: false,
-        type: ((arr) => arr[Math.floor(Math.random() * arr.length)])(
-          enemyList.map((e) => e.type)
-        ),
+        type: randomType,
+        image: correspondingEnemy ? correspondingEnemy.image : undefined,
       };
       setAfflictionArr((prev) => [...prev, newAffliction]);
     }, spawnTiming); // spawn every 4 seconds (you can adjust)
@@ -387,11 +394,18 @@ const App: React.FC = () => {
       });
 
       if (shouldSpawnNew) {
+        const randomType = (() => {
+          const types = enemyList.map((e) => e.type);
+          return types[Math.floor(Math.random() * types.length)];
+        })();
+
+        const correspondingEnemy = enemyList.find((e) => e.type === randomType);
         const newAffliction = {
           id: Date.now(),
           shouldHide: false,
           wasWhacked: false,
-          type: enemyList[Math.floor(Math.random() * enemyList.length)].type,
+          type: randomType,
+          image: correspondingEnemy ? correspondingEnemy.image : undefined,
         };
         return [...updated, newAffliction];
       }
@@ -677,9 +691,10 @@ const App: React.FC = () => {
                     ] as const
                   )[Math.floor(Math.random() * 4)]
                 }
+                type={a.type}
                 speed={enemyList.find((e) => e.type === a.type)?.speed ?? 1}
                 onLanded={handleRemove}
-                content={a.type}
+                content={a.image}
               />
             ))}
           </div>

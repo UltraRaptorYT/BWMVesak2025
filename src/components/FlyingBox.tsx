@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { getRandomNumber } from "@/lib/utils";
+import { enemyList } from "@/lib/utils";
 
 type FlyingBoxProps = {
   id: number;
@@ -9,6 +10,7 @@ type FlyingBoxProps = {
   targetPos?: { x: number; y: number };
   speed?: number;
   content?: string;
+  type?: string;
   shouldHide: boolean;
 };
 
@@ -23,8 +25,10 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
   targetPos = { x: 0, y: 0 },
   speed = 1,
   content = "🚀",
+  type = "ignorance",
   shouldHide,
 }) => {
+  const size = 150;
   const controls = useAnimation();
   const [isVisible, setIsVisible] = useState(true);
   const wasWhackedRef = useRef(false);
@@ -147,7 +151,7 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "pink",
+        // background: "pink",
         transformOrigin: "center",
       }}
     >
@@ -155,7 +159,11 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
         <img
           src={content}
           alt="flying content"
-          style={{ width: 100, height: 100 }}
+          style={{
+            width: size * (2 / 3),
+            height: size,
+            filter: enemyList.find((e) => e.type === type)?.filter ?? "none",
+          }}
         />
       ) : (
         <span style={{ fontSize: 40 }}>{content}</span>
