@@ -21,7 +21,7 @@ export const enemyList = [
   },
   {
     type: "anger",
-    speed: 1.3,
+    speed: 1.5,
     image: "/Anger.gif",
     // filter: "sepia(50%) hue-rotate(-140deg) drop-shadow(0px 0px 25px red)",
   },

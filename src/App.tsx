@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
   const smokeRef = useRef<HTMLDivElement>(null);
   const hasSetHeartRef = useRef(false);
+  const heartRef = useRef<HTMLDivElement>(null);
 
   const poseColor = "transparent";
   // const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
@@ -337,6 +338,20 @@ const App: React.FC = () => {
       console.error("Boing sound failed:", e);
     });
     setCurrentLives((prev) => Math.max(prev - 1, 0));
+    if (heartRef.current) {
+      heartRef.current.classList.add("damaged");
+
+      // Remove the class after animation ends so it can be re-triggered next time
+      heartRef.current.addEventListener(
+        "animationend",
+        () => {
+          if (heartRef.current) {
+            heartRef.current.classList.remove("damaged");
+          }
+        },
+        { once: true }
+      );
+    }
   }
 
   function whackAfflictions(affliction: Element) {
@@ -766,6 +781,7 @@ const App: React.FC = () => {
       {gameStart && (
         <div
           className="fixed text-3xl"
+          ref={heartRef}
           style={{
             left: `${heartX}px`,
             top: `${heartY}px`,
