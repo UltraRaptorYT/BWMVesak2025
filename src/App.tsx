@@ -20,8 +20,8 @@ import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
-import popSfxAudio from "@/assets/punch_sound.wav";
-import boingSfxAudio from "@/assets/Boing.mp3";
+import whackSfxAudio from "@/assets/punch_sound.wav";
+import damagedSfxAudio from "@/assets/Boing.mp3";
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
@@ -74,6 +74,23 @@ const App: React.FC = () => {
   const smokeSize = 100;
 
   const backgroundImageRef = useRef<HTMLImageElement | null>(null);
+
+  const whackSfxRef = useRef<HTMLAudioElement | null>(null);
+  const damagedSfxRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Background music is already handled by <audio> tag
+    const preloadAudio = () => {
+      whackSfxRef.current = new Audio(whackSfxAudio);
+      damagedSfxRef.current = new Audio(damagedSfxAudio);
+
+      // Preload by forcing a small load
+      whackSfxRef.current.load();
+      damagedSfxRef.current.load();
+    };
+
+    preloadAudio();
+  }, []);
 
   useEffect(() => {
     const preloadBackground = async () => {
@@ -355,9 +372,9 @@ const App: React.FC = () => {
 
   function removeLives() {
     console.log("🔻 removing a life");
-    const sfx = new Audio(boingSfxAudio);
+    const sfx = new Audio(damagedSfxAudio);
     sfx.play().catch((e) => {
-      console.error("Boing sound failed:", e);
+      console.error("Damaged sound failed:", e);
     });
     setCurrentLives((prev) => Math.max(prev - 1, 0));
     if (heartRef.current) {
@@ -436,7 +453,7 @@ const App: React.FC = () => {
     if (!idStr) return;
     const id = parseInt(idStr);
 
-    const sfx = new Audio(popSfxAudio);
+    const sfx = new Audio(whackSfxAudio);
     sfx.play().catch((e) => {
       console.error("POP sound failed:", e);
     });
