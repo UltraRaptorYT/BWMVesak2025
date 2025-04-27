@@ -33,6 +33,7 @@ const App: React.FC = () => {
   const spawnTimingRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStartBtnRef = useRef<HTMLButtonElement>(null);
+  const smokeRef = useRef<HTMLDivElement>(null);
   const hasSetHeartRef = useRef(false);
 
   const poseColor = "transparent";
@@ -337,6 +338,26 @@ const App: React.FC = () => {
 
   function whackAfflictions(affliction: Element) {
     const idStr = affliction.getAttribute("data-affliction-id");
+
+    if (smokeRef.current) {
+      let transformStyle = getComputedStyle(affliction).transform;
+      console.log(getComputedStyle(affliction));
+      let afflcitionSmoke = document.createElement("img");
+      afflcitionSmoke.src = `/Smoke.gif?${Date.now()}`;
+      // afflcitionSmoke.style.background = "pink";
+      afflcitionSmoke.style.position = "absolute";
+      afflcitionSmoke.style.top = "0";
+      afflcitionSmoke.style.left = "0";
+      afflcitionSmoke.style.transform = transformStyle;
+      afflcitionSmoke.style.width = "250px";
+      afflcitionSmoke.style.height = "250px";
+
+      smokeRef.current.appendChild(afflcitionSmoke);
+      setTimeout(() => {
+        afflcitionSmoke.remove();
+      }, 1000);
+    }
+
     if (!idStr) return;
     const id = parseInt(idStr);
 
@@ -674,30 +695,33 @@ const App: React.FC = () => {
             </Button> */}
           </div>
         ) : (
-          <div className="absolute h-full w-full top-0" id="afflictionDiv">
-            {afflictionArr.map((a) => (
-              <FlyingBox
-                key={a.id}
-                id={a.id}
-                shouldHide={a.shouldHide}
-                targetPos={{ x: heartX, y: heartY }}
-                fromCorner={
-                  (
-                    [
-                      "top-left",
-                      "top-right",
-                      "bottom-left",
-                      "bottom-right",
-                    ] as const
-                  )[Math.floor(Math.random() * 4)]
-                }
-                type={a.type}
-                speed={enemyList.find((e) => e.type === a.type)?.speed ?? 1}
-                onLanded={handleRemove}
-                content={a.image}
-              />
-            ))}
-          </div>
+          <>
+            <div className="absolute h-full w-full top-0" id="afflictionDiv">
+              {afflictionArr.map((a) => (
+                <FlyingBox
+                  key={a.id}
+                  id={a.id}
+                  shouldHide={a.shouldHide}
+                  targetPos={{ x: heartX, y: heartY }}
+                  fromCorner={
+                    (
+                      [
+                        "top-left",
+                        "top-right",
+                        "bottom-left",
+                        "bottom-right",
+                      ] as const
+                    )[Math.floor(Math.random() * 4)]
+                  }
+                  type={a.type}
+                  speed={enemyList.find((e) => e.type === a.type)?.speed ?? 1}
+                  onLanded={handleRemove}
+                  content={a.image}
+                />
+              ))}
+            </div>
+            <div ref={smokeRef} className="absolute h-full w-full top-0"></div>
+          </>
         )}
       </div>
 

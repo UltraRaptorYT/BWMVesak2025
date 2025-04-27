@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { getRandomNumber } from "@/lib/utils";
-import { enemyList } from "@/lib/utils";
+// import { enemyList } from "@/lib/utils";
 
 type FlyingBoxProps = {
   id: number;
@@ -25,7 +25,7 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
   targetPos = { x: 0, y: 0 },
   speed = 1,
   content = "🚀",
-  type = "ignorance",
+  // type = "ignorance",
   shouldHide,
 }) => {
   const size = 150;
@@ -162,7 +162,7 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
           style={{
             width: size * (2 / 3),
             height: size,
-            filter: enemyList.find((e) => e.type === type)?.filter ?? "none",
+            // filter: enemyList.find((e) => e.type === type)?.filter ?? "none",
           }}
         />
       ) : (
