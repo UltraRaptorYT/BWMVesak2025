@@ -78,12 +78,12 @@ const FlyingBox: React.FC<FlyingBoxProps> = ({
 
     const actualSpeed = basePixelsPerSecond * effectiveSpeed;
     const duration = distance / actualSpeed;
-    console.log({
-      targetX: targetPos.x,
-      boxWidth: boxRef.current?.getBoundingClientRect().width,
-      adjustedX:
-        targetPos.x - (boxRef.current?.getBoundingClientRect().width ?? 0) / 2,
-    });
+    // console.log({
+    //   targetX: targetPos.x,
+    //   boxWidth: boxRef.current?.getBoundingClientRect().width,
+    //   adjustedX:
+    //     targetPos.x - (boxRef.current?.getBoundingClientRect().width ?? 0) / 2,
+    // });
 
     controls.start({
       x: adjustedX,

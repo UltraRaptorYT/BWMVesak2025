@@ -37,7 +37,7 @@ const App: React.FC = () => {
   const hasSetHeartRef = useRef(false);
 
   const poseColor = "transparent";
-  const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
+  // const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
   const [lightPositions, setLightPositions] = useState<
     { x: number; y: number }[]
   >([]);
@@ -70,6 +70,8 @@ const App: React.FC = () => {
   const bgAudioRef = useRef<HTMLAudioElement>(null);
   const [heartX, setHeartX] = useState<number>(0);
   const [heartY, setHeartY] = useState<number>(0);
+  const smokeCount = 10;
+  const smokeSize = 100;
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -88,8 +90,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const loadModelAndStart = async () => {
+      // const detectorConfig = {
+      //   modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+      // };
       const detectorConfig = {
-        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
       };
 
       const detector = await poseDetection.createDetector(
@@ -212,7 +217,6 @@ const App: React.FC = () => {
 
         const backgroundImage = new Image();
         backgroundImage.src = "./Game_Background.gif";
-        backgroundImage.src = "./1.jpg";
         await new Promise((res) => (backgroundImage.onload = res));
 
         canvas.width = video.videoWidth;
@@ -341,16 +345,51 @@ const App: React.FC = () => {
 
     if (smokeRef.current) {
       let transformStyle = getComputedStyle(affliction).transform;
-      console.log(getComputedStyle(affliction));
-      let afflcitionSmoke = document.createElement("img");
-      afflcitionSmoke.src = `/Smoke.gif?${Date.now()}`;
-      // afflcitionSmoke.style.background = "pink";
+      let translateX = 0;
+      let translateY = 0;
+
+      if (transformStyle) {
+        if (transformStyle.startsWith("translate")) {
+          const values = transformStyle.match(
+            /translate\(([^,]+)px,\s*([^)]+)px\)/
+          );
+          if (values) {
+            translateX = parseFloat(values[1]);
+            translateY = parseFloat(values[2]);
+          }
+        } else if (transformStyle.startsWith("matrix")) {
+          const values = transformStyle.match(
+            /matrix\([^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+,\s*([^,]+),\s*([^)]+)\)/
+          );
+          if (values) {
+            translateX = parseFloat(values[1]);
+            translateY = parseFloat(values[2]);
+          }
+        }
+      }
+      console.log(translateX, translateY);
+      let afflcitionSmoke = document.createElement("div");
+      afflcitionSmoke.classList.add("smoke-layer");
       afflcitionSmoke.style.position = "absolute";
-      afflcitionSmoke.style.top = "0";
-      afflcitionSmoke.style.left = "0";
-      afflcitionSmoke.style.transform = transformStyle;
-      afflcitionSmoke.style.width = "250px";
-      afflcitionSmoke.style.height = "250px";
+      afflcitionSmoke.style.top = `${translateY}px`;
+      afflcitionSmoke.style.left = `${translateX}px`;
+      afflcitionSmoke.style.width = `${smokeSize}px`;
+      afflcitionSmoke.style.height = `${smokeSize}px`;
+      for (let i = 0; i < smokeCount; i++) {
+        let smokeEl = document.createElement("div");
+
+        const randomX = (Math.random() - 0.5) * (smokeSize * (2 / 3)) + "px";
+        const randomY = (Math.random() - 0.5) * (smokeSize * (2 / 3)) + "px";
+        smokeEl.style.setProperty("--x", randomX);
+        smokeEl.style.setProperty("--y", randomY);
+        smokeEl.style.animationDelay = Math.random() * 0.15 + "s";
+        smokeEl.classList.add("smoke");
+        setTimeout(() => {
+          smokeEl.classList.add("poof");
+        }, 5);
+
+        afflcitionSmoke.appendChild(smokeEl);
+      }
 
       smokeRef.current.appendChild(afflcitionSmoke);
       setTimeout(() => {
@@ -455,11 +494,11 @@ const App: React.FC = () => {
       return;
     }
 
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const dataUrl = canvas.toDataURL("image/png");
-      setBgImageDataUrl(dataUrl);
-    }
+    // const canvas = canvasRef.current;
+    // if (canvas) {
+    //   const dataUrl = canvas.toDataURL("image/png");
+    //   setBgImageDataUrl(dataUrl);
+    // }
 
     // const afflictions = Array.from({ length: 2 }, (_, i) => ({
     //   id: Date.now() + i,
@@ -592,13 +631,13 @@ const App: React.FC = () => {
         Your browser does not support the audio element.
       </audio>
 
-      {bgImageDataUrl && gameStart && (
+      {/* {bgImageDataUrl && gameStart && (
         <img
           src={bgImageDataUrl}
           className="absolute h-full top-0 left-1/2 -translate-x-1/2 object-cover"
           alt="Background"
         />
-      )}
+      )} */}
       {showAdmin && (
         <Card className="absolute z-10 w-md">
           <CardHeader>
@@ -667,8 +706,8 @@ const App: React.FC = () => {
           ref={canvasRef}
           className={cn(
             "h-full transition-opacity duration-500 mx-auto",
-            gameStart ? "border-2 border-black" : "",
-            gameStart ? "opacity-[0.85]" : "opacity-100"
+            gameStart ? "border-2 border-black" : ""
+            // gameStart ? "opacity-[0.85]" : "opacity-100"
           )}
         />
 
@@ -756,8 +795,7 @@ const App: React.FC = () => {
         </>
       )}
 
-      {bgImageDataUrl &&
-        gameStart &&
+      {gameStart &&
         lightPositions.map((pos, i) => {
           return (
             <div
