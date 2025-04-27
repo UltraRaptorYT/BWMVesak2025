@@ -215,7 +215,7 @@ const App: React.FC = () => {
         if (!ctx) return;
 
         const backgroundImage = new Image();
-        backgroundImage.src = "./Game_Background.gif";
+        backgroundImage.src = "./GameBG.gif";
         await new Promise((res) => (backgroundImage.onload = res));
 
         canvas.width = video.videoWidth;

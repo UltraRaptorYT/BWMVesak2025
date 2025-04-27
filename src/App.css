@@ -4,7 +4,7 @@
 }
 
 .mainBG {
-  background-image: url("/Game_Background.gif");
+  background-image: url("/GameBG.gif");
   background-position: center;
   background-size: cover;
 }
