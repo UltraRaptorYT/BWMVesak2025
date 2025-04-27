@@ -73,6 +73,19 @@ const App: React.FC = () => {
   const smokeCount = 10;
   const smokeSize = 100;
 
+  const backgroundImageRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const preloadBackground = async () => {
+      const img = new Image();
+      img.src = "/GameBG.gif"; // ✅ absolute path
+      await new Promise((res) => (img.onload = res));
+      backgroundImageRef.current = img;
+    };
+
+    preloadBackground();
+  }, []);
+
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
 
@@ -215,9 +228,9 @@ const App: React.FC = () => {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        const backgroundImage = new Image();
-        backgroundImage.src = "./GameBG.gif";
-        await new Promise((res) => (backgroundImage.onload = res));
+        // const backgroundImage = new Image();
+        // backgroundImage.src = "./GameBG.gif";
+        // await new Promise((res) => (backgroundImage.onload = res));
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -235,6 +248,14 @@ const App: React.FC = () => {
           offscreenCtx.save();
           offscreenCtx.scale(-1, 1);
           offscreenCtx.translate(-offscreenCanvas.width, 0);
+          if (!backgroundImageRef.current) return;
+          ctx.drawImage(
+            backgroundImageRef.current,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
           offscreenCtx.drawImage(
             video,
             0,
