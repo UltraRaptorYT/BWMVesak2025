@@ -25,7 +25,6 @@ import boingSfxAudio from "@/assets/Boing.mp3";
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
-  const debug: boolean = true;
   const videoRef = useRef<HTMLVideoElement>(null);
   const lightSizeRef = useRef<HTMLInputElement>(null);
   const countdownRef = useRef<HTMLInputElement>(null);
@@ -280,7 +279,7 @@ const App: React.FC = () => {
           ctx.putImageData(frame, 0, 0);
 
           // 8. Draw pose keypoints and skeleton (optional)
-          if (debug && poses.length > 0) {
+          if (poses.length > 0) {
             const keypoints = poses[0].keypoints;
             const mirroredKeypoints = keypoints.map((kp) => ({
               ...kp,
@@ -313,7 +312,7 @@ const App: React.FC = () => {
           ctx.restore(); // Done with flipped drawing
 
           // 9. Send flipped frame to hand tracking
-          if (debug) await hands.send({ image: offscreenCanvas });
+          await hands.send({ image: offscreenCanvas });
 
           requestAnimationFrame(loop);
         };
