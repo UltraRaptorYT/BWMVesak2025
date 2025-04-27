@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
-import popSfxAudio from "@/assets/Pop.wav";
+import popSfxAudio from "@/assets/punch_sound.wav";
 import boingSfxAudio from "@/assets/Boing.mp3";
 import { Button } from "@/components/ui/button";
 
