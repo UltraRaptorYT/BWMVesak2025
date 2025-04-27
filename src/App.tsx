@@ -248,14 +248,7 @@ const App: React.FC = () => {
           offscreenCtx.save();
           offscreenCtx.scale(-1, 1);
           offscreenCtx.translate(-offscreenCanvas.width, 0);
-          if (!backgroundImageRef.current) return;
-          ctx.drawImage(
-            backgroundImageRef.current,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
+
           offscreenCtx.drawImage(
             video,
             0,
@@ -282,7 +275,15 @@ const App: React.FC = () => {
           ctx.translate(-canvas.width, 0);
 
           // 4. Draw flipped background
-          ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+          if (!backgroundImageRef.current) return;
+          ctx.drawImage(
+            backgroundImageRef.current,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          // ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
           // 5. Get flipped video frame
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
