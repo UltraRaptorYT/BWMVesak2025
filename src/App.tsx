@@ -21,7 +21,7 @@ import FlyingBox from "@/components/FlyingBox";
 import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
 import whackSfxAudio from "@/assets/punch_sound.wav";
-import damagedSfxAudio from "@/assets/Boing.mp3";
+import damagedSfxAudio from "@/assets/damaged.wav";
 import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
