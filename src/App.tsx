@@ -766,11 +766,19 @@ const App: React.FC = () => {
 
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
-              {gameOver && <div>GAME OVER!</div>}
-              <p>Put your palms together {gameOver && "to play again"}</p>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-[#f0eb8e] text-center">
+              {gameOver && (
+                <div className="text-5xl text-red-300/85 font-bold ">
+                  💀 Overwhelmed by the Demons
+                </div>
+              )}
+              <p className="text-4xl my-5">
+                Bring your palms together
+                <br />
+                to begin {gameOver && "again"}
+              </p>
               {!isFirstSession && (
-                <div>
+                <div className="bg-white/25 w-fit rounded-lg mx-auto px-5 py-2">
                   {highScore > 0 && <p>High Score: {highScore}</p>}
                   {gameOver && <p>Score: {score}</p>}
                 </div>

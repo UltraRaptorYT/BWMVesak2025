@@ -3,6 +3,12 @@
   min-height: 100vh;
 }
 
+*,
+*::before,
+*::after {
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+
 .mainBG {
   background-image: url("/GameBG.gif");
   background-position: center;
