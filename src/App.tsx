@@ -92,16 +92,16 @@ const App: React.FC = () => {
     preloadAudio();
   }, []);
 
-  useEffect(() => {
-    const preloadBackground = async () => {
-      const img = new Image();
-      img.src = "/GameBG.gif"; // ✅ absolute path
-      await new Promise((res) => (img.onload = res));
-      backgroundImageRef.current = img;
-    };
+  // useEffect(() => {
+  //   const preloadBackground = async () => {
+  //     const img = new Image();
+  //     img.src = "/GameBG.gif"; // ✅ absolute path
+  //     await new Promise((res) => (img.onload = res));
+  //     backgroundImageRef.current = img;
+  //   };
 
-    preloadBackground();
-  }, []);
+  //   preloadBackground();
+  // }, []);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
