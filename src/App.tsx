@@ -92,16 +92,16 @@ const App: React.FC = () => {
     preloadAudio();
   }, []);
 
-  // useEffect(() => {
-  //   const preloadBackground = async () => {
-  //     const img = new Image();
-  //     img.src = "/GameBG.gif"; // ✅ absolute path
-  //     await new Promise((res) => (img.onload = res));
-  //     backgroundImageRef.current = img;
-  //   };
+  useEffect(() => {
+    const preloadBackground = async () => {
+      const img = new Image();
+      img.src = "/GameBG.gif"; // ✅ absolute path
+      await new Promise((res) => (img.onload = res));
+      backgroundImageRef.current = img;
+    };
 
-  //   preloadBackground();
-  // }, []);
+    preloadBackground();
+  }, []);
 
   useEffect(() => {
     const hasPlayedBefore = sessionStorage.getItem("hasPlayed");
@@ -514,7 +514,7 @@ const App: React.FC = () => {
 
         const correspondingEnemy = enemyList.find((e) => e.type === randomType);
         const newAffliction = {
-          id: Date.now(),
+          id: Date.now() + Math.random(),
           shouldHide: false,
           wasWhacked: false,
           type: randomType,
@@ -768,11 +768,11 @@ const App: React.FC = () => {
           <div className="absolute h-full w-full top-0">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-[#f0eb8e] text-center">
               {gameOver && (
-                <div className="text-5xl text-red-300/85 font-bold ">
+                <div className="text-6xl font-bold creepster-text">
                   💀 Overwhelmed by the Demons
                 </div>
               )}
-              <p className="text-4xl my-5">
+              <p className="text-4xl my-5 pulse-text">
                 Bring your palms together
                 <br />
                 to begin {gameOver && "again"}

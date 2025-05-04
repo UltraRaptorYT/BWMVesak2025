@@ -94,3 +94,41 @@
   animation: heartShake 0.5s;
   animation-timing-function: ease-in-out;
 }
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pulse-text {
+  color: #f6e05e;
+  text-align: center;
+  animation: pulse 5s infinite ease-in-out;
+}
+
+@font-face {
+  font-family: "Creepster";
+  src: url("/Creepster-Regular.ttf") format("truetype");
+}
+
+.creepster-text {
+  font-family: "Creepster", cursive; /* or any horror-themed font */
+  color: #b30000;
+  text-shadow: 2px 2px 5px #000;
+}
+
+.lightPos {
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 0 20px 10px rgba(255, 255, 0, 0.5);
+  border-radius: 50%;
+}
