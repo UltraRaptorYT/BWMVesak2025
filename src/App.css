@@ -123,7 +123,8 @@
 
 .creepster-text {
   font-family: "Creepster", cursive; /* or any horror-themed font */
-  color: #b30000;
+  /* color: #b30000; */
+  color: white;
   text-shadow: 2px 2px 5px #000;
 }
 
@@ -131,4 +132,8 @@
   animation: pulse 1.5s infinite;
   box-shadow: 0 0 20px 10px rgba(255, 255, 0, 0.5);
   border-radius: 50%;
+}
+
+.afflictions {
+  filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8)); /* Cyan glow */
 }

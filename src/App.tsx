@@ -533,10 +533,6 @@ const App: React.FC = () => {
     }
   };
 
-  // useEffect(() => {
-  //   console.log(afflictionArr, "HELLIOAS");
-  // }, [afflictionArr]);
-
   function gameStartFunc() {
     hasLifeBeenRemovedRef.current = false;
     // activate once
@@ -546,19 +542,6 @@ const App: React.FC = () => {
     if (afflictionArr.length > 0) {
       return;
     }
-
-    // const canvas = canvasRef.current;
-    // if (canvas) {
-    //   const dataUrl = canvas.toDataURL("image/png");
-    //   setBgImageDataUrl(dataUrl);
-    // }
-
-    // const afflictions = Array.from({ length: 2 }, (_, i) => ({
-    //   id: Date.now() + i,
-    //   shouldHide: false,
-    //   wasWhacked: false,
-    // }));
-    // setAfflictionArr((prev) => [...prev, ...afflictions]);
   }
 
   useEffect(() => {
@@ -841,7 +824,7 @@ const App: React.FC = () => {
 
       {gameStart && (
         <>
-          <div className="absolute top-4 left-4 z-10 flex flex-col items-start justify-center">
+          <div className="absolute top-4 left-4 z-10 flex flex-col items-start justify-center gap-3">
             <div className="text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               Time: {countdown}s
             </div>
