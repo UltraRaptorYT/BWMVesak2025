@@ -23,6 +23,7 @@ import bgAudio from "@/assets/bgAudio.mp3";
 import whackSfxAudio from "@/assets/punch_sound.wav";
 import damagedSfxAudio from "@/assets/damaged.wav";
 import { Button } from "@/components/ui/button";
+import FallingLotus from "./components/FallingLotus";
 
 const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -50,11 +51,20 @@ const App: React.FC = () => {
   const [highScore, setHighScore] = useState<number>(
     parseInt(localStorage.getItem("highScore") || "0")
   );
+  const [scoreMultiplier, setScoreMultiplier] = useState<number>(1);
   const [isFirstSession, setIsFirstSession] = useState<boolean>(true);
   const commonLives = 3;
   const [lives, setLives] = useState<number>(commonLives);
   const [currentLives, setCurrentLives] = useState<number>(commonLives);
   const [gameStart, setGameStart] = useState<boolean>(false);
+  const lotusSize = 40;
+  type LotusData = {
+    id: number;
+    shouldHide: boolean;
+    wasWhacked: boolean;
+  };
+  const [lotusArr, setLotusArr] = useState<LotusData[]>([]);
+  const lotusSpawnTiming = 3000;
   type AfflictionData = {
     id: number;
     shouldHide: boolean;
@@ -192,6 +202,28 @@ const App: React.FC = () => {
                   setGameStart(true);
                 }
               }
+
+              // FallingLotus
+              const lotuses = document.querySelectorAll(".lotus");
+              lotuses.forEach((lotus) => {
+                const lotusRect = lotus.getBoundingClientRect();
+                const circleCenterX =
+                  (lotusRect.left - canvasRect.left + lotusRect.width / 2) *
+                  (canvas.width / canvasRect.width);
+                const circleCenterY =
+                  (lotusRect.top - canvasRect.top + lotusRect.height / 2) *
+                  (canvas.height / canvasRect.height);
+                const circleRadius =
+                  (lotusRect.width / 2) * (canvas.width / canvasRect.width);
+
+                const distance = Math.sqrt(
+                  (x - circleCenterX) ** 2 + (y - circleCenterY) ** 2
+                );
+
+                if (distance <= circleRadius) {
+                  whackLotus(lotus);
+                }
+              });
 
               // Afflictions
               const afflictions = document.querySelectorAll(".afflictions");
@@ -393,6 +425,28 @@ const App: React.FC = () => {
     }
   }
 
+  function whackLotus(lotus: Element) {
+    const idStr = lotus.getAttribute("data-lotus-id");
+    if (!idStr) return;
+    const id = parseInt(idStr);
+    console.log("WHACKED LOTUS");
+    // const sfx = new Audio(whackSfxAudio);
+    // sfx.play().catch((e) => {
+    //   console.error("POP sound failed:", e);
+    // });
+
+    // Prevent double whack
+    setLotusArr((prev) => {
+      const alreadyWhacked = prev.find((a) => a.id === id)?.wasWhacked;
+      if (alreadyWhacked) return prev;
+
+      (window as any)[`whackLotus_${id}`]?.();
+      return prev.map((a) =>
+        a.id === id ? { ...a, wasWhacked: true, shouldHide: true } : a
+      );
+    });
+  }
+
   function whackAfflictions(affliction: Element) {
     const idStr = affliction.getAttribute("data-affliction-id");
 
@@ -493,6 +547,39 @@ const App: React.FC = () => {
     return () => clearInterval(spawnInterval);
   }, [gameStart]);
 
+  useEffect(() => {
+    if (!gameStart) return;
+
+    const spawnInterval = setInterval(() => {
+      const newLotus = {
+        id: Date.now(),
+        shouldHide: false,
+        wasWhacked: false,
+      };
+      setLotusArr((prev) => [...prev, newLotus]);
+    }, lotusSpawnTiming);
+
+    return () => clearInterval(spawnInterval);
+  }, [gameStart]);
+
+  const handleLotus = (id: number, wasWhacked: boolean) => {
+    console.log("LOTUS", id);
+
+    setLotusArr((prev) => {
+      const updated = prev.map((a) => {
+        if (a.id === id && !a.wasWhacked) {
+          return { ...a, shouldHide: true, wasWhacked: true };
+        }
+        return a;
+      });
+      return updated;
+    });
+    console.log("HI");
+    if (wasWhacked) {
+      setScoreMultiplier((p) => p * 2);
+    }
+  };
+
   const handleRemove = (id: number, wasWhacked: boolean) => {
     console.log("WHACKED", id);
 
@@ -514,7 +601,7 @@ const App: React.FC = () => {
 
         const correspondingEnemy = enemyList.find((e) => e.type === randomType);
         const newAffliction = {
-          id: Date.now() + Math.random(),
+          id: Date.now(),
           shouldHide: false,
           wasWhacked: false,
           type: randomType,
@@ -527,7 +614,7 @@ const App: React.FC = () => {
     });
 
     if (wasWhacked) {
-      setScore((p) => p + 1);
+      setScore((p) => p + 1 * scoreMultiplier);
     } else {
       removeLives();
     }
@@ -607,6 +694,8 @@ const App: React.FC = () => {
     setGameStart(false);
     setGameOver(true);
     setAfflictionArr([]);
+    setLotusArr([]);
+    setScoreMultiplier(1);
     hasSetHeartRef.current = false;
   }
 
@@ -752,7 +841,7 @@ const App: React.FC = () => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-[#f0eb8e] text-center">
               {gameOver && (
                 <div className="text-6xl font-bold creepster-text">
-                  💀 Overwhelmed by the Demons
+                  💀 Overwhelmed by the Poisons
                 </div>
               )}
               <p className="text-4xl my-5 pulse-text">
@@ -779,6 +868,25 @@ const App: React.FC = () => {
           </div>
         ) : (
           <>
+            <div className="absolute h-full w-full top-0" id="lotusDiv">
+              {lotusArr.map((lotus) => (
+                <FallingLotus
+                  key={"LOTUS" + lotus.id}
+                  id={lotus.id}
+                  shouldHide={lotus.shouldHide}
+                  onCaught={handleLotus}
+                  size={lotusSize}
+                  startX={
+                    canvasRef.current
+                      ? canvasRef.current.getBoundingClientRect().left +
+                        canvasRef.current.offsetWidth * 0.1 +
+                        Math.random() *
+                          (canvasRef.current.offsetWidth * 0.8 - lotusSize)
+                      : Math.random() * 800
+                  }
+                />
+              ))}
+            </div>
             <div className="absolute h-full w-full top-0" id="afflictionDiv">
               {afflictionArr.map((a) => (
                 <FlyingBox
@@ -835,7 +943,8 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-            Score: {score}
+            <div>Score: {score}</div>
+            <div>Multiplier: x{scoreMultiplier}</div>
           </div>
         </>
       )}
