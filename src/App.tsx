@@ -22,6 +22,7 @@ import { FaHeart } from "react-icons/fa";
 import bgAudio from "@/assets/bgAudio.mp3";
 import whackSfxAudio from "@/assets/punch_sound.wav";
 import damagedSfxAudio from "@/assets/damaged.wav";
+import chimeSfxAudio from "@/assets/Chime.mp3";
 import { Button } from "@/components/ui/button";
 import FallingLotus from "./components/FallingLotus";
 
@@ -57,7 +58,7 @@ const App: React.FC = () => {
   const [lives, setLives] = useState<number>(commonLives);
   const [currentLives, setCurrentLives] = useState<number>(commonLives);
   const [gameStart, setGameStart] = useState<boolean>(false);
-  const lotusSize = 40;
+  const lotusSize = 100;
   type LotusData = {
     id: number;
     shouldHide: boolean;
@@ -87,16 +88,19 @@ const App: React.FC = () => {
 
   const whackSfxRef = useRef<HTMLAudioElement | null>(null);
   const damagedSfxRef = useRef<HTMLAudioElement | null>(null);
+  const chimeSfxRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Background music is already handled by <audio> tag
     const preloadAudio = () => {
       whackSfxRef.current = new Audio(whackSfxAudio);
       damagedSfxRef.current = new Audio(damagedSfxAudio);
+      chimeSfxRef.current = new Audio(chimeSfxAudio);
 
       // Preload by forcing a small load
       whackSfxRef.current.load();
       damagedSfxRef.current.load();
+      chimeSfxRef.current.load();
     };
 
     preloadAudio();
@@ -430,10 +434,10 @@ const App: React.FC = () => {
     if (!idStr) return;
     const id = parseInt(idStr);
     console.log("WHACKED LOTUS");
-    // const sfx = new Audio(whackSfxAudio);
-    // sfx.play().catch((e) => {
-    //   console.error("POP sound failed:", e);
-    // });
+    const sfx = new Audio(chimeSfxAudio);
+    sfx.play().catch((e) => {
+      console.error("Chime sound failed:", e);
+    });
 
     // Prevent double whack
     setLotusArr((prev) => {
@@ -875,6 +879,7 @@ const App: React.FC = () => {
                   id={lotus.id}
                   shouldHide={lotus.shouldHide}
                   onCaught={handleLotus}
+                  content="./lotus.png"
                   size={lotusSize}
                   startX={
                     canvasRef.current

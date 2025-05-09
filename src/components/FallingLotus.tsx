@@ -28,10 +28,20 @@ const FallingLotus: React.FC<FallingLotusProps> = ({
 
   const animateToTarget = () => {
     if (!lotusRef.current && !window) return;
+
     controls.start({
-      x: startX,
       y: window.innerHeight + size,
       transition: { duration, ease: "linear" },
+    });
+    
+    controls.start({
+      x: [startX - 20, startX + 20],
+      transition: {
+        repeat: Infinity,
+        repeatType: "reverse",
+        duration: 0.5, // 🟢 controls speed of swaying
+        ease: "easeInOut",
+      },
     });
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -84,7 +94,7 @@ const FallingLotus: React.FC<FallingLotusProps> = ({
       ref={lotusRef}
       className="lotus"
       data-lotus-id={id}
-      initial={{ x: startX, y: -size }} // 🟢 Start above screen
+      initial={{ y: -size }} // 🟢 Start above screen
       animate={controls}
       style={{
         position: "absolute",
