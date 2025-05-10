@@ -8,20 +8,20 @@ export function cn(...inputs: ClassValue[]) {
 export const enemyList = [
   {
     type: "ignorance",
-    speed: 0.5,
+    speed: 0.1,
     image: "/Ignorance.gif",
     filter: "none",
     // filter: "hue-rotate(-50deg) drop-shadow(0px 0px 25px red)",
   },
   {
     type: "greed",
-    speed: 1,
+    speed: 0.25,
     image: "/Greed.gif",
     // filter: "saturate(75%) drop-shadow(0px 0px 25px red)",
   },
   {
     type: "anger",
-    speed: 1.5,
+    speed: 0.75,
     image: "/Anger.gif",
     // filter: "sepia(50%) hue-rotate(-140deg) drop-shadow(0px 0px 25px red)",
   },

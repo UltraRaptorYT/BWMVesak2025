@@ -106,10 +106,11 @@ export type Keypoint = {
 
 function getKeypoint(pose: poseDetection.Pose, name: string): Keypoint | null {
   const point = pose?.keypoints?.find((k) => k.name === name);
-  return point?.score != null && point.score > 0.35 ? point : null;
+  return point?.score != null && point.score > 0.15 ? point : null;
 }
 
 export function detectPraying(pose: poseDetection.Pose) {
+  const gotNose = getKeypoint(pose, "nose");
   const leftWrist = getKeypoint(pose, "left_wrist");
   const rightWrist = getKeypoint(pose, "right_wrist");
 
@@ -124,7 +125,7 @@ export function detectPraying(pose: poseDetection.Pose) {
 
   const verticalAlign = Math.abs(leftWrist.y - rightWrist.y);
 
-  const isPraying = wristDistance <= 90 && verticalAlign <= 70;
+  const isPraying = wristDistance <= 90 && verticalAlign <= 70 && gotNose;
 
   return {
     isPraying,

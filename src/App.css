@@ -137,3 +137,7 @@
 .afflictions {
   filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8)); /* Cyan glow */
 }
+
+.lotus {
+  filter: drop-shadow(0 0 10px rgba(255, 0, 255, 0.8)); /* Cyan glow */
+}

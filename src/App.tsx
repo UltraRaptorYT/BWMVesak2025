@@ -38,6 +38,8 @@ const App: React.FC = () => {
   const hasSetHeartRef = useRef(false);
   const heartRef = useRef<HTMLDivElement>(null);
 
+  const [cooldownActive, setCooldownActive] = useState(false);
+  const [allPoses, setAllPoses] = useState<poseDetection.Pose[]>([]);
   const poseColor = "transparent";
   // const [bgImageDataUrl, setBgImageDataUrl] = useState<string | null>(null);
   const [lightPositions, setLightPositions] = useState<
@@ -91,6 +93,10 @@ const App: React.FC = () => {
   const chimeSfxRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // console.log(allPoses);
+  }, [allPoses]);
+
+  useEffect(() => {
     // Background music is already handled by <audio> tag
     const preloadAudio = () => {
       whackSfxRef.current = new Audio(whackSfxAudio);
@@ -135,7 +141,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadModelAndStart = async () => {
       const detectorConfig = {
-        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
       };
       // const detectorConfig = {
       //   modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
@@ -156,9 +162,9 @@ const App: React.FC = () => {
 
       hands.setOptions({
         modelComplexity: 1,
-        minDetectionConfidence: 0.35,
-        minTrackingConfidence: 0.35,
-        num_hands: 100,
+        minDetectionConfidence: 0.01, // Lowered further for high sensitivity
+        minTrackingConfidence: 0.01,
+        num_hands: 6,
       });
 
       const video = videoRef.current;
@@ -184,7 +190,13 @@ const App: React.FC = () => {
         ) {
           for (const landmarks of results.multiHandLandmarks) {
             const canvasRect = canvas.getBoundingClientRect();
+
             drawHand(ctx, landmarks, poseColor); // Check each hand landmark
+            // let allPoints = [...landmarks];
+            // for (const pose of allPoses) {
+            //   allPoints.push(pose.keypoints);
+            // }
+
             for (const point of landmarks) {
               const x = point.x * canvas.width;
               const y = point.y * canvas.height;
@@ -257,6 +269,53 @@ const App: React.FC = () => {
                 }
               });
             }
+
+            // const newPositions = [];
+            // for (const pose of allPoses) {
+            //   const leftWrist = pose.keypoints.find(
+            //     (k) => k.name === "left_wrist"
+            //   );
+            //   const rightWrist = pose.keypoints.find(
+            //     (k) => k.name === "right_wrist"
+            //   );
+
+            //   if (
+            //     leftWrist &&
+            //     typeof leftWrist.score === "number" &&
+            //     leftWrist.score > 0.2
+            //   ) {
+            //     newPositions.push({
+            //       x:
+            //         canvasRect.left +
+            //         (canvas.width - leftWrist.x) *
+            //           (canvasRect.width / canvas.width),
+            //       y:
+            //         canvasRect.top +
+            //         leftWrist.y * (canvasRect.height / canvas.height),
+            //     });
+            //   }
+
+            //   if (
+            //     rightWrist &&
+            //     typeof rightWrist.score === "number" &&
+            //     rightWrist.score > 0.2
+            //   ) {
+            //     newPositions.push({
+            //       x:
+            //         canvasRect.left +
+            //         (canvas.width - rightWrist.x) *
+            //           (canvasRect.width / canvas.width),
+            //       y:
+            //         canvasRect.top +
+            //         rightWrist.y * (canvasRect.height / canvas.height),
+            //     });
+            //   }
+            // }
+
+            // setLightPositions(newPositions);
+
+            // // const newPositions
+
             const newPositions = results.multiHandLandmarks.map(
               (landmarks: any) => {
                 const tip = landmarks[9];
@@ -317,8 +376,11 @@ const App: React.FC = () => {
             nmsRadius: 30,
           });
           const poses = await detector.estimatePoses(offscreenCanvas, {
-            scoreThreshold: 0.3,
+            scoreThreshold: 0.01,
+            maxPoses: 10,
           });
+
+          setAllPoses(poses);
 
           // 3. Flip main canvas context
           ctx.save(); // ⬅️ Save original state
@@ -353,24 +415,69 @@ const App: React.FC = () => {
 
           // 7. Put back onto canvas
           ctx.putImageData(frame, 0, 0);
-
+          let foundPraying = false;
+          let prayingWrists = null;
           // 8. Draw pose keypoints and skeleton (optional)
           if (poses.length > 0) {
-            const keypoints = poses[0].keypoints;
-            const mirroredKeypoints = keypoints.map((kp) => ({
-              ...kp,
-              x: canvas.width - kp.x,
-            }));
-            drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, poseColor);
-            drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, poseColor);
-          }
-          const { isPraying, wrists } = detectPraying(poses[0]);
+            for (const pose of poses) {
+              const mirroredKeypoints = pose.keypoints.map((kp) => ({
+                ...kp,
+                x: canvas.width - kp.x,
+              }));
+              drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, poseColor);
+              drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, poseColor);
 
-          if (!hasSetHeartRef.current && !gameStart && isPraying && wrists) {
+              const { isPraying, wrists } = detectPraying(pose);
+
+              const leftShoulder = pose.keypoints.find(
+                (k) => k.name === "left_shoulder"
+              );
+              const rightShoulder = pose.keypoints.find(
+                (k) => k.name === "right_shoulder"
+              );
+
+              if (leftShoulder && rightShoulder) {
+                const shoulderDist = Math.abs(leftShoulder.x - rightShoulder.x);
+                console.log("Shoulder Distance:", shoulderDist);
+              }
+
+              const facingForward =
+                leftShoulder &&
+                rightShoulder &&
+                Math.abs(leftShoulder.x - rightShoulder.x) >
+                  canvas.width * 0.15; // tune threshold
+
+              if (isPraying && facingForward) {
+                foundPraying = true;
+                prayingWrists = wrists;
+                break;
+              }
+            }
+
+            // const keypoints = poses[0].keypoints;
+            // const mirroredKeypoints = keypoints.map((kp) => ({
+            //   ...kp,
+            //   x: canvas.width - kp.x,
+            // }));
+            // drawKeypoints(mirroredKeypoints, 0.5, ctx, 1, poseColor);
+            // drawSkeleton(mirroredKeypoints, 0.5, ctx, 1, poseColor);
+          }
+          // const { isPraying, wrists } = detectPraying(poses[0]);
+
+          if (
+            !hasSetHeartRef.current &&
+            !gameStart &&
+            !cooldownActive &&
+            foundPraying &&
+            prayingWrists
+          ) {
             const canvas = canvasRef.current;
             if (canvas) {
               const canvasRect = canvas.getBoundingClientRect();
-              let { x, y } = getMidpoint(wrists.leftWrist, wrists.rightWrist);
+              let { x, y } = getMidpoint(
+                prayingWrists.leftWrist,
+                prayingWrists.rightWrist
+              );
 
               const xScreen =
                 canvasRect.left + (x / canvas.width) * canvasRect.width;
@@ -647,6 +754,27 @@ const App: React.FC = () => {
       if (e.ctrlKey && e.code === "Backquote") {
         console.log("pressed");
         setShowAdmin((prev) => !prev);
+      } else if (
+        e.code == "Space" &&
+        !cooldownActive &&
+        !gameStart &&
+        canvasRef.current
+      ) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const canvasRect = canvas.getBoundingClientRect();
+          let { x, y } = { x: 0, y: 0 };
+
+          const xScreen =
+            canvasRect.left + (x / canvas.width) * canvasRect.width;
+          const yScreen =
+            canvasRect.top + (y / canvas.height) * canvasRect.height;
+
+          setHeartX(xScreen);
+          setHeartY(yScreen);
+        }
+        hasSetHeartRef.current = true;
+        setGameStart(true);
       }
     };
 
@@ -693,7 +821,6 @@ const App: React.FC = () => {
   useEffect(() => {
     setCountdown(countdownTimer);
   }, [countdownTimer]);
-
   function gameEnded() {
     setGameStart(false);
     setGameOver(true);
@@ -701,6 +828,12 @@ const App: React.FC = () => {
     setLotusArr([]);
     setScoreMultiplier(1);
     hasSetHeartRef.current = false;
+
+    // Activate cooldown
+    setCooldownActive(true);
+    setTimeout(() => {
+      setCooldownActive(false);
+    }, 5000); // 5 seconds
   }
 
   useEffect(() => {
@@ -849,12 +982,12 @@ const App: React.FC = () => {
                 </div>
               )}
               <p className="text-4xl my-5 pulse-text">
-                Bring your palms together
+                Put your palms together
                 <br />
                 to begin {gameOver && "again"}
               </p>
               {!isFirstSession && (
-                <div className="bg-white/25 w-fit rounded-lg mx-auto px-5 py-2">
+                <div className="bg-black/25 w-fit rounded-lg mx-auto px-5 py-2">
                   {highScore > 0 && <p>High Score: {highScore}</p>}
                   {gameOver && <p>Score: {score}</p>}
                 </div>
