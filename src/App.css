@@ -6,7 +6,7 @@
 *,
 *::before,
 *::after {
-  font-family: Georgia, "Times New Roman", Times, serif;
+  font-family: "Times New Roman", Times, serif;
 }
 
 .mainBG {
@@ -111,7 +111,6 @@
 }
 
 .pulse-text {
-  color: #f6e05e;
   text-align: center;
   animation: pulse 5s infinite ease-in-out;
 }

@@ -113,8 +113,10 @@ export function detectPraying(pose: poseDetection.Pose) {
   const gotNose = getKeypoint(pose, "nose");
   const leftWrist = getKeypoint(pose, "left_wrist");
   const rightWrist = getKeypoint(pose, "right_wrist");
+  const leftShoulder = getKeypoint(pose, "left_shoulder");
+  const rightShoulder = getKeypoint(pose, "right_shoulder");
 
-  if (!leftWrist || !rightWrist) {
+  if (!leftWrist || !rightWrist || !leftShoulder || !rightShoulder) {
     return { isPraying: false, wrists: null };
   }
 
@@ -124,8 +126,17 @@ export function detectPraying(pose: poseDetection.Pose) {
   );
 
   const verticalAlign = Math.abs(leftWrist.y - rightWrist.y);
+  const chestCenterX = (leftShoulder.x + rightShoulder.x) / 2;
+  const chestCenterY = (leftShoulder.y + rightShoulder.y) / 2;
+  const avgHandX = (leftWrist.x + rightWrist.x) / 2;
+  const avgHandY = (leftWrist.y + rightWrist.y) / 2;
 
-  const isPraying = wristDistance <= 90 && verticalAlign <= 70 && gotNose;
+  const isPraying =
+    wristDistance <= 100 &&
+    verticalAlign <= 90 &&
+    Math.abs(avgHandX - chestCenterX) < 150 &&
+    Math.abs(avgHandY - chestCenterY) < 150 &&
+    gotNose;
 
   return {
     isPraying,

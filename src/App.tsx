@@ -38,6 +38,9 @@ const App: React.FC = () => {
   const hasSetHeartRef = useRef(false);
   const heartRef = useRef<HTMLDivElement>(null);
 
+  const [gameOverType, setGameOverType] = useState<"overwhelmed" | "timeout">(
+    "overwhelmed"
+  );
   const [cooldownActive, setCooldownActive] = useState(false);
   const [allPoses, setAllPoses] = useState<poseDetection.Pose[]>([]);
   const poseColor = "transparent";
@@ -56,7 +59,7 @@ const App: React.FC = () => {
   );
   const [scoreMultiplier, setScoreMultiplier] = useState<number>(1);
   const [isFirstSession, setIsFirstSession] = useState<boolean>(true);
-  const commonLives = 3;
+  const commonLives = 5;
   const [lives, setLives] = useState<number>(commonLives);
   const [currentLives, setCurrentLives] = useState<number>(commonLives);
   const [gameStart, setGameStart] = useState<boolean>(false);
@@ -161,10 +164,11 @@ const App: React.FC = () => {
       });
 
       hands.setOptions({
+        runningMode: "LIVE_STREAM",
         modelComplexity: 1,
-        minDetectionConfidence: 0.01, // Lowered further for high sensitivity
-        minTrackingConfidence: 0.01,
-        num_hands: 6,
+        minDetectionConfidence: 0.05, // Lowered further for high sensitivity
+        minTrackingConfidence: 0.05,
+        num_hands: 2,
       });
 
       const video = videoRef.current;
@@ -215,7 +219,9 @@ const App: React.FC = () => {
                   !gameStart
                 ) {
                   console.log("Touched Game Start");
-                  setGameStart(true);
+                  if (!cooldownActive) {
+                    startGame();
+                  }
                 }
               }
 
@@ -488,8 +494,9 @@ const App: React.FC = () => {
               setHeartY(yScreen);
             }
 
-            hasSetHeartRef.current = true;
-            setGameStart(true);
+            if (!cooldownActive) {
+              startGame();
+            }
           }
 
           ctx.restore(); // Done with flipped drawing
@@ -512,6 +519,13 @@ const App: React.FC = () => {
 
     loadTF();
   }, []);
+
+  function startGame() {
+    if (cooldownActive || gameStart) return;
+
+    hasSetHeartRef.current = true;
+    setGameStart(true);
+  }
 
   function removeLives() {
     console.log("🔻 removing a life");
@@ -763,7 +777,7 @@ const App: React.FC = () => {
         const canvas = canvasRef.current;
         if (canvas) {
           const canvasRect = canvas.getBoundingClientRect();
-          let { x, y } = { x: 0, y: 0 };
+          let { x, y } = { x: 350, y: 250 };
 
           const xScreen =
             canvasRect.left + (x / canvas.width) * canvasRect.width;
@@ -773,8 +787,9 @@ const App: React.FC = () => {
           setHeartX(xScreen);
           setHeartY(yScreen);
         }
-        hasSetHeartRef.current = true;
-        setGameStart(true);
+        if (!cooldownActive) {
+          startGame();
+        }
       }
     };
 
@@ -821,19 +836,20 @@ const App: React.FC = () => {
   useEffect(() => {
     setCountdown(countdownTimer);
   }, [countdownTimer]);
-  function gameEnded() {
+
+  function gameEnded(gameOverType: "overwhelmed" | "timeout" = "overwhelmed") {
     setGameStart(false);
     setGameOver(true);
     setAfflictionArr([]);
     setLotusArr([]);
     setScoreMultiplier(1);
     hasSetHeartRef.current = false;
-
+    setGameOverType(gameOverType);
     // Activate cooldown
     setCooldownActive(true);
     setTimeout(() => {
       setCooldownActive(false);
-    }, 5000); // 5 seconds
+    }, 60000); // 5 seconds
   }
 
   useEffect(() => {
@@ -846,7 +862,7 @@ const App: React.FC = () => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
-            gameEnded();
+            gameEnded("timeout");
             return 0;
           }
           return prev - 1;
@@ -975,10 +991,12 @@ const App: React.FC = () => {
 
         {!gameStart ? (
           <div className="absolute h-full w-full top-0">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-[#f0eb8e] text-center">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-[#ffec7d] text-center">
               {gameOver && (
                 <div className="text-6xl font-bold creepster-text">
-                  💀 Overwhelmed by the Poisons
+                  {gameOverType == "overwhelmed"
+                    ? "💀 Overwhelmed by the Poisons"
+                    : "🎉 You survived the Poisons"}
                 </div>
               )}
               <p className="text-4xl my-5 pulse-text">
@@ -1071,16 +1089,16 @@ const App: React.FC = () => {
       {gameStart && (
         <>
           <div className="absolute top-4 left-4 z-10 flex flex-col items-start justify-center gap-3">
-            <div className="text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+            <div className="text-white text-2xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               Time: {countdown}s
             </div>
             <div className="flex gap-2">
               {Array.from({ length: currentLives }).map((_, i) => (
-                <FaHeart key={"heart" + i} size={48} color="white" />
+                <FaHeart key={"heart" + i} size={65} color="white" />
               ))}
             </div>
           </div>
-          <div className="absolute top-4 right-4 z-10 text-white text-xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+          <div className="absolute top-4 right-4 z-10 text-white text-2xl font-bold bg-black bg-opacity-50 px-4 py-2 rounded-lg">
             <div>Score: {score}</div>
             <div>Multiplier: x{scoreMultiplier}</div>
           </div>
